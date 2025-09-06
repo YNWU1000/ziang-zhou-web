@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tools — Ziang Zhou</title>
+  <link rel="stylesheet" href="styles/styles.css">
+</head>
+<body class="tool-page">
+
+<!-- (Removed SVG symbol) -->
+
+<!-- (moved spacer + info below to appear after typed text) -->
+
+<!-- Tool runner panel (loads p5 HTML) -->
+<section id="toolRunner" aria-hidden="true">
+  <button type="button" id="toolRunnerClose" aria-label="Close tool">◤Close</button>
+  <iframe id="toolFrame" title="Tool Runner"></iframe>
+  </section>
+
+<!-- Editable info templates for each tool (supports full HTML & paragraphs) -->
+<template id="toolinfo-particle">
+  <div class="grid">
+    <div class="heading">GR1D</div>
+    <div class="heading">Graphic Tool</div>
+    <div class="muted">
+      <div>Web / Figma Plugin</div>
+      <div>P5.JS</div>
+      <div>2025</div>
+    </div>
+    <div class="muted">
+      <div>Grid System</div>
+      <div>Generative</div>
+      <div>MKI</div>
+    </div>
+    <div class="desc">
+      <p>GR1D is a simple tool for grid-based drawing. It was first built in p5.js to avoid the repetitive task of setting up grids for graphics work. Over time, it became a straightforward way to sketch icons, patterns, pixel concepts, and abstract forms without rebuilding the basics each time.</p>
+      <p>It offers snap-to-grid drawing with circle or square brushes, adjustable grid sizes, and several modes for strokes, outlines, colors, or direct connections. Work can be exported in multiple sizes or pasted directly into Figma. Extras include a pattern generator, keyboard shortcuts, and an option to run Conway’s Game of Life on the grid.</p>
+    </div>
+    <div class="photo"><img src="images/tool/gr1d/banner.jpg" alt="GR1D banner"></div>
+    <div class="photo"><img src="images/tool/gr1d/2.jpg" alt="GR1D banner"></div>
+  </div>
+  </template>
+
+<template id="toolinfo-grid">
+  <div class="grid">
+    <div class="heading">DITHER</div>
+    <div class="heading">Image Processing</div>
+    <div class="muted">
+      <div>Web / Figma Plugin</div>
+      <div>P5.JS</div>
+      <div>2025</div>
+    </div>
+    <div class="muted">
+      <div>Dither is a right</div>
+      <div>Generative</div>
+      <div>MKI</div>
+    </div>
+    <div class="desc">
+      <p>Dither is an experimental image-based grid system for generative graphics. It transforms uploaded images into halftone-style compositions using customizable grid patterns, shapes, and color palettes. Inspired by traditional print dithering and modern generative design, the tool allows artists and designers to remix images into structured, modular patterns that feel both analog and algorithmic.</p>
+    </div>
+    <div class="photo"><img src="images/tool/dither/previews.gif" alt="DITHER banner"></div>
+  </div>
+  </template>
+
+
+<!-- TEMPLATE PARAGRAPH (kept hidden; used to build #out) -->
+<p id="source" aria-label="Tools list">
+  <span class="chunk name" data-key="toolword">Tool</span>.
+  <br />
+  <br />
+
+  <!-- Replace the href values with your actual p5.js sketch URLs -->
+  <span class="chunk link" data-tool="particle" href="https://editor.p5js.org/" target="_blank" rel="noopener noreferrer" >◥</span>
+  <a class="chunk link" data-tool="particle" data-p5="tool_p5/gr1d_ynwumk4_2025.html" href="#" rel="noopener noreferrer">GR1D</a>
+  <br />
+  <span class="chunk link" data-tool="grid" data-p5="tool_p5/dither_ynwumk4_2025.html" href="#" rel="noopener noreferrer">◥</span>
+  <a class="chunk link" data-tool="grid" data-p5="tool_p5/dither_ynwumk4_2025.html" href="#" rel="noopener noreferrer">DITHER</a>
+  <br />
+
+
+  <br />
+  <a class="chunk link" href="index.html">◤ Back to Home</a>.
+</p>
+
+<!-- OUTPUT PARAGRAPH (where typing renders) -->
+<p id="out" aria-live="polite" aria-atomic="true"></p>
+<!-- Right-side tool info (shown on hover) -->
+<aside id="toolInfo" aria-hidden="true"></aside>
+
+<footer>
+  <span>YOUR AD HERE</span>
+  <span>(C) Ziang Zhou 2025</span>
+  </footer>
+
+<script defer src="js/basic.js"></script>
+<!-- No extra JS for the symbol; keep only hover and blend via CSS -->
+</body>
+</html>

@@ -1,0 +1,705 @@
+  <!-- enjoy! created by YNWU -->
+   
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dither - Ziang Zhou</title>
+
+  <!-- libs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.2/p5.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ---- Minimal studio UI (your style) ---- */
+    html, body { margin:0; padding:0; overflow:hidden; height:100%; font-family:"JetBrains Mono",monospace; background:#ebebeb; color:#646464; }
+    canvas { display:block; position:absolute; top:0; left:0; pointer-events:auto; z-index:1; background:white; }
+
+    #control-panel { display:flex; flex-direction:column; position:absolute; top:0; right:0; width:240px; height:100%; background:#ebebeb;
+      padding:20px 15px; box-sizing:border-box; z-index:10; overflow-y:auto; }
+
+    .section { margin-bottom:40px; }
+    .section-title { font-size:12px; color:#000; font-weight:600; margin-bottom:20px; letter-spacing:.5px; }
+
+    .param-group { margin-bottom:8px; }
+    .param-label { font-size:10px; color:#646464; margin-bottom:5px; display:block; text-transform:uppercase; letter-spacing:.5px; }
+    .param-row { display:flex; align-items:center; gap:8px; }
+    .param-value { min-width:50px; background:#fff; border:1px solid #ddd; color:#000; font-size:10px; text-align:center; padding:4px 6px; font-weight:600; box-sizing:border-box; }
+    input[type="number"].param-value { -moz-appearance:textfield; }
+    input[type="number"].param-value::-webkit-outer-spin-button,
+    input[type="number"].param-value::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+    input[type="range"]{ flex:1; appearance:none; height:3px; background:#ddd; outline:none; border-radius:0; }
+    input[type="range"]::-webkit-slider-thumb{ appearance:none; width:12px; height:12px; background:#000; cursor:pointer; border-radius:0; }
+    input[type="range"]::-moz-range-thumb{ width:12px; height:12px; background:#000; cursor:pointer; border:none; border-radius:0; }
+
+    select { width:100%; background:#fff; border:1px solid #ddd; color:#000; font-size:10px; padding:6px 8px; font-weight:600; appearance:none;
+      background-image:url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23646464' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+      background-position:right 8px center; background-repeat:no-repeat; background-size:16px; padding-right:32px; }
+
+    .button-group{ display:flex; flex-direction:column; gap:2px; }
+    button{ width:100%; padding:8px 12px; border:0; background:#fff; color:#646464; font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; cursor:pointer; transition:.15s; text-align:left; position:relative; }
+    button:hover{ background:#d0e1ff; color:#000; }
+    button:active{ background:#aacdff; color:#000; }
+    button.primary{ background:#000; color:#fff; text-align:center; }
+    button.primary:hover{ background:#333; }
+
+    .shape-buttons { display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap; }
+    .shape-btn{ flex:1 0 calc(33.33% - 4px); font-size:10px; padding:8px 0; background:#fff; text-align:center; color:#646464; border:1px solid #ddd; cursor:pointer; transition:.05s; }
+    .shape-btn:hover{ background:#d0e1ff; color:#000; }
+    .shape-btn.active{ background:#0000ff; color:#fff; border-color:#0000ff; }
+    .shape-btn[disabled]{ opacity:.4; cursor:not-allowed; }
+
+    .row2 { display:flex; gap:8px; }
+    .row2 > * { flex:1; }
+    input[type="number"]{ width:100%; background:#fff; border:1px solid #ddd; color:#000; font-size:10px; padding:6px 8px; font-weight:600; box-sizing:border-box; }
+
+    .swatch{ display:flex; gap:8px; }
+    .swatch input[type="color"]{ flex:1; height:28px; border:1px solid #ddd; padding:0; }
+
+    .mini-buttons { display:flex; gap:6px; margin-top:6px; }
+    .mini-buttons button { flex:1; text-align:center; padding:6px 0; }
+  </style>
+</head>
+<body>
+
+  <div id="control-panel">
+    <!-- IMAGE -->
+    <div class="section">
+      <div class="section-title">IMAGE</div>
+      <div class="button-group">
+        <button id="btnUpload">Upload Image</button>
+        <input id="file" type="file" accept="image/*" style="display:none">
+      </div>
+    </div>
+
+    <!-- DITHER -->
+    <div class="section">
+      <div class="section-title">DITHER</div>
+
+      <div class="param-group">
+        <label class="param-label">Mode</label>
+        <select id="mode">
+          <option value="halftone">Halftone (size)</option>
+          <option value="ordered">Ordered (Bayer)</option>
+          <option value="error">Error Diffusion</option>
+          <option value="random">Random Threshold</option>
+        </select>
+      </div>
+
+      <div class="param-group">
+        <label class="param-label">Shape</label>
+        <div class="shape-buttons">
+          <button class="shape-btn active" data-shape="circle">●</button>
+          <button class="shape-btn" data-shape="ring">◌</button>
+          <button class="shape-btn" data-shape="square">■</button>
+          <button class="shape-btn" data-shape="diamond">◆</button>
+          <button class="shape-btn" data-shape="triangle">▲</button>
+          <button class="shape-btn" data-shape="line">━</button>
+          <button class="shape-btn" data-shape="hex">⬡</button>
+          <button class="shape-btn" data-shape="star">★</button>
+          <button class="shape-btn" data-shape="plus">＋</button>
+          <button class="shape-btn" data-shape="cross">✕</button>
+          <button class="shape-btn" data-shape="chev">⌃</button>
+          <button class="shape-btn" data-shape="custom" id="btnShapeCustom" disabled>SVG</button>
+        </div>
+      </div>
+
+      <div class="param-group">
+        <div class="row2">
+          <button id="btnUploadShape">Upload SVG Shape</button>
+          <button id="btnClearShape">Clear Shape</button>
+        </div>
+        <input id="fileShape" type="file" accept=".svg" style="display:none">
+      </div>
+
+      <div class="param-group">
+        <label class="param-label">Grid Size</label>
+        <div class="param-row">
+          <input type="range" id="cell" min="1" max="64" step="1" value="12" />
+          <input type="number" id="cellNum" class="param-value" min="1" max="64" step="1" value="12" />
+        </div>
+      </div>
+
+      <div class="param-group">
+        <label class="param-label">Gap (spacing)</label>
+        <div class="param-row">
+          <input type="range" id="gap" min="0" max="40" step="1" value="0" />
+          <input type="number" id="gapNum" class="param-value" min="0" max="40" step="1" value="0" />
+        </div>
+      </div>
+
+      <div class="param-group">
+        <label class="param-label">Angle</label>
+        <div class="param-row">
+          <input type="range" id="angle" min="-45" max="45" step="1" value="0" />
+          <input type="number" id="angleNum" class="param-value" min="-45" max="45" step="1" value="0" />
+        </div>
+      </div>
+
+      <div class="param-group">
+        <label class="param-label">Gamma</label>
+        <div class="param-row">
+          <input type="range" id="gamma" min="0.2" max="3" step="0.01" value="1.2" />
+          <input type="number" id="gammaNum" class="param-value" min="0.2" max="3" step="0.01" value="1.2" />
+        </div>
+      </div>
+
+      <div class="param-group">
+        <label class="param-label">Levels (Ordered/Error/Random)</label>
+        <div class="param-row">
+          <input type="range" id="levels" min="2" max="8" step="1" value="4" />
+          <input type="number" id="levelsNum" class="param-value" min="2" max="8" step="1" value="4" />
+        </div>
+      </div>
+
+      <div class="param-group">
+        <label class="param-label">Stroke / Line</label>
+        <div class="param-row">
+          <input type="range" id="stroke" min="0" max="1" step="0.01" value="0.5" />
+          <input type="number" id="strokeNum" class="param-value" min="0" max="1" step="0.01" value="0.5" />
+        </div>
+      </div>
+
+      <div class="param-group">
+        <label class="param-label">Blend Mode</label>
+        <select id="blend">
+          <option value="BLEND">Normal</option>
+          <option value="MULTIPLY">Multiply</option>
+          <option value="SCREEN">Screen</option>
+          <option value="OVERLAY">Overlay</option>
+          <option value="ADD">Add</option>
+          <option value="DIFFERENCE">Difference</option>
+          <option value="EXCLUSION">Exclusion</option>
+          <option value="LIGHTEST">Lightest</option>
+          <option value="DARKEST">Darkest</option>
+          <option value="HARD_LIGHT">Hard Light</option>
+          <option value="SOFT_LIGHT">Soft Light</option>
+        </select>
+      </div>
+
+      <div class="param-group">
+        <label class="param-label">Invert Luma</label>
+        <select id="invert">
+          <option value="false">No</option>
+          <option value="true">Yes</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- COLORS -->
+    <div class="section">
+      <div class="section-title">COLORS</div>
+      <div class="param-group">
+        <div class="swatch">
+          <input type="color" id="fg" value="#1F74F2" />
+          <input type="color" id="bg" value="#F3F4F6" />
+        </div>
+      </div>
+      <div class="button-group">
+        <button id="btnSwap">Swap FG/BG</button>
+        <button id="btnShuffle">Shuffle Colors</button>
+      </div>
+    </div>
+
+    <!-- JITTER (only experimental kept) -->
+    <div class="section">
+      <div class="section-title">JITTER</div>
+      <div class="param-group">
+        <label class="param-label">Amount (0–1)</label>
+        <div class="param-row">
+          <input type="range" id="jit" min="0" max="1" step="0.01" value="0" />
+          <input type="number" id="jitNum" class="param-value" min="0" max="1" step="0.01" value="0" />
+        </div>
+      </div>
+    </div>
+
+    <!-- PRESETS -->
+    <div class="section">
+      <div class="section-title">PRESETS</div>
+      <div class="param-group">
+        <select id="presetSelect"></select>
+      </div>
+      <div class="button-group">
+        <button id="btnPresetApply" class="primary">Apply</button>
+        <button id="btnPresetSave">Save Current</button>
+        <button id="btnPresetDelete">Delete</button>
+      </div>
+    </div>
+
+    <!-- EXPORT -->
+    <div class="section">
+      <div class="section-title">EXPORT</div>
+      <div class="param-group">
+        <label class="param-label">Width (px)</label>
+        <input type="number" id="outW" min="64" max="20000" value="2048" />
+        <div class="mini-buttons">
+          <button id="mul15">×1.5</button>
+          <button id="mul2">×2</button>
+          <button id="mul3">×3</button>
+        </div>
+      </div>
+      <div class="param-group">
+        <label class="param-label">Height (auto)</label>
+        <input type="number" id="outH" disabled />
+      </div>
+      <div class="button-group">
+        <button id="btnSetImage">Set to Image Size</button>
+        <button id="btnExportPNG" class="primary">Export PNG</button>
+        <button id="btnExportSVG" class="primary">Export SVG</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ---------- State ---------- */
+    let img = null;
+    const params = {
+      mode: 'halftone',
+      shape: 'circle',
+      cell: 12,
+      gap: 0,
+      angle: 0,
+      gamma: 1.2,
+      levels: 4,
+      strokeWeight: 0.5,
+      invert: false,
+      fg: '#1F74F2',
+      bg: '#F3F4F6',
+      blend: 'BLEND'
+    };
+
+    const exp = { jitter: 0 };
+
+    // custom SVG shape
+    const customShape = { loaded:false, name:'', viewBox:{minX:0,minY:0,width:100,height:100}, dList:[], paths:[] };
+
+    // palettes for shuffle
+    const PALETTES = [
+      ['#FFFFFF','#1966E3'], ['#111827','#FDE047'], ['#0B1026','#F0F4F8'],
+      ['#0A0A0A','#FF007A'], ['#1F2937','#38BDF8'], ['#0E7490','#F1F5F9'],
+      ['#0F172A','#EAB308'], ['#F5F5F4','#0B0F19'], ['#EEF2FF','#3730A3'],
+      ['#0E0E0E','#00D1B2'], ['#F43F5E','#0B1026']
+    ];
+
+    // built-in presets
+    const BUILTINS = {
+      'Blueprint Rings': {
+        params:{mode:'halftone',shape:'ring',cell:12,gap:2,angle:0,gamma:1.2,levels:4,strokeWeight:0.6,invert:false,fg:'#1F74F2',bg:'#F3F4F6',blend:'BLEND'},
+        exp:{jitter:0}
+      },
+      'Newsprint Diamond': {
+        params:{mode:'ordered',shape:'diamond',cell:10,gap:1,angle:15,gamma:1.1,levels:6,strokeWeight:0.4,invert:false,fg:'#0B1026',bg:'#F5F5F4',blend:'MULTIPLY'},
+        exp:{jitter:0.05}
+      },
+      'LCD Lines': {
+        params:{mode:'ordered',shape:'line',cell:9,gap:2,angle:0,gamma:1.0,levels:4,strokeWeight:0.8,invert:false,fg:'#111827',bg:'#FFFFFF',blend:'OVERLAY'},
+        exp:{jitter:0}
+      },
+      'Square Pop': {
+        params:{mode:'random',shape:'square',cell:8,gap:0,angle:0,gamma:1.2,levels:4,strokeWeight:0.5,invert:false,fg:'#111827',bg:'#FDE047',blend:'HARD_LIGHT'},
+        exp:{jitter:0.08}
+      },
+      'Minimal Dots': {
+        params:{mode:'halftone',shape:'circle',cell:7,gap:0,angle:0,gamma:1.0,levels:4,strokeWeight:0.3,invert:false,fg:'#0B0F19',bg:'#F5F5F4',blend:'BLEND'},
+        exp:{jitter:0}
+      }
+    };
+
+    const STORAGE_KEY = 'ditherPresets.v1';
+
+    const BAYER8=(()=>{const m=[[0,48,12,60,3,51,15,63],[32,16,44,28,35,19,47,31],[8,56,4,52,11,59,7,55],[40,24,36,20,43,27,39,23],[2,50,14,62,1,49,13,61],[34,18,46,30,33,17,45,29],[10,58,6,54,9,57,5,53],[42,26,38,22,41,25,37,21]];
+      const M=new Array(8);for(let y=0;y<8;y++){M[y]=new Array(8);for(let x=0;x<8;x++){M[y][x]=(m[y][x]+0.5)/64;}}return M;})();
+
+    /* ---------- p5 ---------- */
+    function setup(){
+      const w = window.innerWidth - 240, h = window.innerHeight;
+      const cnv = createCanvas(w, h); cnv.parent(document.body);
+      noLoop(); pixelDensity(1); noSmooth(); background('#ffffff');
+      wireUI(); loadPresetsIntoSelect(); drawPreview(); window.addEventListener('resize', onResize);
+    }
+    function draw(){}
+    function onResize(){ resizeCanvas(window.innerWidth - 240, window.innerHeight, false); drawPreview(); }
+
+    /* ---------- UI wiring ---------- */
+    function syncPair(sliderId, inputId, obj, key, clampFn=(v)=>v){
+      const s=document.getElementById(sliderId), n=document.getElementById(inputId);
+      const apply=v=>{ obj[key]=clampFn(v); s.value=obj[key]; n.value=obj[key]; drawPreview(); };
+      s.addEventListener('input',e=>apply(parseFloat(e.target.value)));
+      n.addEventListener('change',e=>apply(parseFloat(e.target.value)));
+    }
+
+    function wireUI(){
+      // Image
+      document.getElementById('btnUpload').onclick=()=>document.getElementById('file').click();
+      document.getElementById('file').addEventListener('change',e=>{
+        const f=e.target.files?.[0]; if(!f) return;
+        const reader=new FileReader();
+        reader.onload=ev=>{
+          loadImage(ev.target.result, im=>{
+            img=im; img.loadPixels();
+            const outW=document.getElementById('outW');
+            outW.value = img.width; updateOutH();
+            drawPreview();
+          });
+        };
+        reader.readAsDataURL(f);
+      });
+
+      // Custom shape
+      document.getElementById('btnUploadShape').onclick=()=>document.getElementById('fileShape').click();
+      document.getElementById('fileShape').addEventListener('change',e=>{
+        const f=e.target.files?.[0]; if(!f) return;
+        const r=new FileReader();
+        r.onload=ev=>{
+          const parsed=parseSVGText(ev.target.result);
+          if(parsed){ Object.assign(customShape,{loaded:true,name:f.name.replace(/\.[^/.]+$/,''),viewBox:parsed.viewBox,dList:parsed.dList,paths:parsed.dList.map(d=>new Path2D(d))});
+            document.getElementById('btnShapeCustom').disabled=false;
+            params.shape='custom';
+            document.querySelectorAll('.shape-btn').forEach(b=>b.classList.remove('active'));
+            document.querySelector('.shape-btn[data-shape="custom"]').classList.add('active');
+            drawPreview();
+          } else alert('SVG parse failed (need viewBox and <path d="...">).');
+        };
+        r.readAsText(f);
+      });
+      document.getElementById('btnClearShape').onclick=()=>{
+        Object.assign(customShape,{loaded:false,name:'',dList:[],paths:[],viewBox:{minX:0,minY:0,width:100,height:100}});
+        document.getElementById('btnShapeCustom').disabled=true;
+        if(params.shape==='custom'){ params.shape='circle'; document.querySelectorAll('.shape-btn').forEach(b=>b.classList.remove('active')); document.querySelector('.shape-btn[data-shape="circle"]').classList.add('active'); }
+        drawPreview();
+      };
+
+      // Dither controls
+      document.getElementById('mode').onchange=e=>{ params.mode=e.target.value; drawPreview(); };
+      document.getElementById('invert').onchange=e=>{ params.invert=e.target.value==='true'; drawPreview(); };
+      document.getElementById('blend').onchange=e=>{ params.blend=e.target.value; drawPreview(); };
+
+      syncPair('cell','cellNum',params,'cell', v=>Math.max(1,Math.min(256,Math.round(v||12))));
+      syncPair('gap','gapNum',params,'gap', v=>Math.max(0,Math.min(200,Math.round(v||0))));
+      syncPair('angle','angleNum',params,'angle', v=>Math.max(-45,Math.min(45,Math.round(v||0))));
+      syncPair('gamma','gammaNum',params,'gamma', v=>Math.max(0.2,Math.min(3,+(v||1.2).toFixed(2))));
+      syncPair('levels','levelsNum',params,'levels', v=>Math.max(2,Math.min(8,Math.round(v||4))));
+      syncPair('stroke','strokeNum',params,'strokeWeight', v=>Math.max(0,Math.min(1,+(v||0.5).toFixed(2))));
+
+      document.querySelectorAll('.shape-btn').forEach(btn=>{
+        btn.addEventListener('click',()=>{ if(btn.disabled) return; params.shape=btn.dataset.shape;
+          document.querySelectorAll('.shape-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); drawPreview(); });
+      });
+
+      const fg=document.getElementById('fg'), bg=document.getElementById('bg');
+      fg.oninput=e=>{ params.fg=e.target.value; drawPreview(); };
+      bg.oninput=e=>{ params.bg=e.target.value; drawPreview(); };
+      document.getElementById('btnSwap').onclick=()=>{ const a=fg.value; fg.value=bg.value; bg.value=a; params.fg=fg.value; params.bg=bg.value; drawPreview(); };
+      document.getElementById('btnShuffle').onclick=()=>{ const [a,b]=PALETTES[Math.floor(Math.random()*PALETTES.length)]; fg.value=a; bg.value=b; params.fg=a; params.bg=b; drawPreview(); };
+
+      // Jitter
+      syncPair('jit','jitNum',exp,'jitter', v=>Math.max(0,Math.min(1,+(v||0).toFixed(2))));
+
+      // Export size (always original ratio)
+      document.getElementById('outW').addEventListener('change', updateOutH);
+      document.getElementById('btnSetImage').onclick=()=>{ if(!img) return; document.getElementById('outW').value = img.width; updateOutH(); };
+      document.getElementById('mul15').onclick=()=>{ scaleOut(1.5); };
+      document.getElementById('mul2').onclick=()=>{ scaleOut(2); };
+      document.getElementById('mul3').onclick=()=>{ scaleOut(3); };
+
+      // Export
+      document.getElementById('btnExportPNG').onclick=()=> exportPNG(getOutW(), getOutH());
+      document.getElementById('btnExportSVG').onclick=()=> exportSVG(getOutW(), getOutH());
+
+      // Presets
+      document.getElementById('btnPresetApply').onclick=applySelectedPreset;
+      document.getElementById('btnPresetSave').onclick=saveCurrentPreset;
+      document.getElementById('btnPresetDelete').onclick=deleteSelectedPreset;
+    }
+
+    function getOutW(){ return parseInt(document.getElementById('outW').value||1024); }
+    function getOutH(){ return parseInt(document.getElementById('outH').value||1024); }
+    function updateOutH(){
+      const w = getOutW();
+      const ratio = img ? (img.height / img.width) : 1;
+      document.getElementById('outH').value = Math.max(64, Math.round(w * ratio));
+    }
+    function scaleOut(f){ const outW=document.getElementById('outW'); outW.value = Math.round((parseInt(outW.value||1024))*f); updateOutH(); }
+
+    /* ---------- helpers ---------- */
+    const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+    const lerpN=(a,b,t)=>a+(b-a)*t;
+    function luma(r,g,b,gamma=1){ const toLin=c=>{c/=255;return c<=0.04045?c/12.92:Math.pow((c+0.055)/1.055,2.4);}; const L=0.2126*toLin(r)+0.7152*toLin(g)+0.0722*toLin(b); return Math.pow(clamp(L,0,1),1/gamma); }
+    function computeContain(iw,ih,cw,ch){ const s=Math.min(cw/iw,ch/ih); const dw=iw*s, dh=ih*s, dx=(cw-dw)/2, dy=(ch-dh)/2; return {scale:s,dx,dy,dw,dh}; }
+
+    function parseSVGText(txt){
+      let vb={minX:0,minY:0,width:100,height:100};
+      const vbMatch=txt.match(/viewBox\s*=\s*["']\s*([-\d\.eE]+)\s+([-\d\.eE]+)\s+([-\d\.eE]+)\s+([-\d\.eE]+)\s*["']/i);
+      if(vbMatch){ vb={minX:parseFloat(vbMatch[1]),minY:parseFloat(vbMatch[2]),width:parseFloat(vbMatch[3]),height:parseFloat(vbMatch[4])};
+      } else {
+        const wMatch=txt.match(/width\s*=\s*["']\s*([-\d\.eE]+)\s*/i);
+        const hMatch=txt.match(/height\s*=\s*["']\s*([-\d\.eE]+)\s*/i);
+        const w=wMatch?parseFloat(wMatch[1]):100, h=hMatch?parseFloat(hMatch[1]):100;
+        vb={minX:0,minY:0,width:w,height:h};
+      }
+      const dList=Array.from(txt.matchAll(/<path[^>]*\sd\s*=\s*["']([^"']+)["'][^>]*>/gi)).map(m=>m[1]);
+      if(dList.length===0) return null;
+      return {viewBox:vb,dList};
+    }
+
+    /* ---------- Preview ---------- */
+    function drawPreview(){
+      clear(); background(params.bg);
+      if(!img){ stroke(200); noFill(); for(let y=40;y<height;y+=40){ for(let x=40;x<width;x+=40){ circle(x,y,6); }} return; }
+      renderDither(this, width, height, params, exp);
+    }
+
+    /* ---------- Export stills ---------- */
+    function exportPNG(outW,outH){
+      if(!img) return;
+      const g=createGraphics(outW,outH); g.pixelDensity(1); g.noSmooth(); g.background(params.bg);
+      renderDither(g,outW,outH,params,exp);
+      g.canvas.toBlob(blob=>{ const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`dither_${outW}x${outH}.png`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); g.remove(); },'image/png');
+    }
+
+    function exportSVG(outW,outH){
+      if(!img) return;
+      const P = {...params}; const E = {...exp};
+      const fit=computeContain(img.width,img.height,outW,outH); img.loadPixels();
+
+      const cssBlend=({BLEND:'normal',MULTIPLY:'multiply',SCREEN:'screen',OVERLAY:'overlay',ADD:'screen',DIFFERENCE:'difference',EXCLUSION:'exclusion',LIGHTEST:'lighten',DARKEST:'darken',HARD_LIGHT:'hard-light',SOFT_LIGHT:'soft-light'})[P.blend]||'normal';
+      const cell=Math.max(1,Math.round(P.cell)); const step=Math.max(1,Math.round(P.cell + P.gap));
+      const ang=P.angle*Math.PI/180; const cosA=Math.cos(ang), sinA=Math.sin(ang); const N=8;
+      const tw = Math.max(0.3, P.strokeWeight * (cell*0.6)); // supports tiny cells
+
+      let svg=[]; svg.push(`<svg xmlns="http://www.w3.org/2000/svg" width="${outW}" height="${outH}" viewBox="0 0 ${outW} ${outH}">`);
+      svg.push(`<rect width="${outW}" height="${outH}" fill="${P.bg}"/>`); svg.push(`<g style="mix-blend-mode:${cssBlend}">`);
+
+      const sampleTone=(rx,ry)=>{
+        const ix=(rx-fit.dx)/fit.scale, iy=(ry-fit.dy)/fit.scale; let t=1;
+        if(ix>=0&&iy>=0&&ix<img.width&&iy<img.height){ const idx=4*(Math.floor(iy)*img.width+Math.floor(ix)); t=luma(img.pixels[idx],img.pixels[idx+1],img.pixels[idx+2],P.gamma); }
+        if(P.invert) t=1-t;
+        if(P.mode==='ordered'){ const gx=Math.floor((rx/step))%N, gy=Math.floor((ry/step))%N; const threshold=BAYER8[(gy+N)%N][(gx+N)%N]; const L=Math.max(2,Math.round(P.levels)); const q=Math.floor(t*L)/(L-1); t=clamp((q+threshold/L)*0.999,0,1); }
+        else if(P.mode==='random'){ const L=Math.max(2,Math.round(P.levels)); const noiseV=(Math.random()-0.5)*(1.0/L); const q=Math.floor(clamp(t+noiseV,0,1)*L)/(L-1); t=clamp(q,0,1); }
+        return t;
+      };
+
+      for(let y=-step; y<outH+step; y+=step){
+        for(let x=-step; x<outW+step; x+=step){
+          let cx=x+step/2, cy=y+step/2;
+
+          // Jitter (deterministic using noise)
+          if (E.jitter>0){
+            const j = E.jitter * cell * 0.75;
+            const n1 = noise(cx*0.03, cy*0.03)-0.5;
+            const n2 = noise(100+cx*0.03, 100+cy*0.03)-0.5;
+            cx += n1*2*j; cy += n2*2*j;
+          }
+
+          const u=cx-outW/2, v=cy-outH/2; const rx=u*cosA - v*sinA + outW/2; const ry=u*sinA + v*cosA + outH/2;
+
+          let t = sampleTone(rx, ry);
+          if(P.mode==='error'){ const t2=sampleTone(rx+step*0.5,ry), t3=sampleTone(rx,ry+step*0.5); t=clamp((t*2+t2+t3)/4,0,1); const L=Math.max(2,Math.round(P.levels)); t=Math.round(t*(L-1))/(L-1); }
+
+          const rMax = (cell*0.5)*0.98; const rad = rMax + (0 - rMax) * t; if (rad<=0.2) continue;
+
+          const sw = Math.min(tw, rad*0.95);
+          svg.push(shapeToSVG(P.shape, cx, cy, rad, sw, P.fg));
+        }
+      }
+
+      svg.push(`</g></svg>`);
+      const blob=new Blob([svg.join('\n')],{type:'image/svg+xml'}); const url=URL.createObjectURL(blob);
+      const a=document.createElement('a'); a.href=url; a.download=`dither_${outW}x${outH}.svg`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+
+      function shapeToSVG(shape,cx,cy,rad,sw,fg){
+        if(shape==='custom' && customShape.loaded){
+          const vb=customShape.viewBox; const s=(rad*2)/Math.max(vb.width,vb.height);
+          let g=`<g transform="translate(${cx.toFixed(3)} ${cy.toFixed(3)}) scale(${s.toFixed(5)}) translate(${(-vb.minX - vb.width/2).toFixed(3)} ${(-vb.minY - vb.height/2).toFixed(3)})" fill="${fg}">`;
+          customShape.dList.forEach(d=>g+=`<path d="${d}"/>`); return g+`</g>`;
+        }
+        switch(shape){
+          case 'circle': return `<circle cx="${cx.toFixed(3)}" cy="${cy.toFixed(3)}" r="${rad.toFixed(3)}" fill="${fg}" />`;
+          case 'ring':   return `<circle cx="${cx.toFixed(3)}" cy="${cy.toFixed(3)}" r="${rad.toFixed(3)}" fill="none" stroke="${fg}" stroke-width="${sw.toFixed(3)}" stroke-linecap="round" />`;
+          case 'square':{ const s=rad*2/Math.SQRT2; return `<rect x="${(cx-s).toFixed(3)}" y="${(cy-s).toFixed(3)}" width="${(s*2).toFixed(3)}" height="${(s*2).toFixed(3)}" fill="${fg}" />`; }
+          case 'diamond':{ const s=rad*2/Math.SQRT2; return `<rect x="${(cx-s).toFixed(3)}" y="${(cy-s).toFixed(3)}" width="${(s*2).toFixed(3)}" height="${(s*2).toFixed(3)}" fill="${fg}" transform="translate(${cx.toFixed(3)} ${cy.toFixed(3)}) rotate(45) translate(${-cx.toFixed(3)} ${-cy.toFixed(3)})" />`; }
+          case 'triangle':{ const s=rad*2, h=s*Math.sqrt(3)/2; const p1=`${cx.toFixed(3)},${(cy-h/1.2).toFixed(3)}`, p2=`${(cx-s/2).toFixed(3)},${(cy+h/2.4).toFixed(3)}`, p3=`${(cx+s/2).toFixed(3)},${(cy+h/2.4).toFixed(3)}`; return `<polygon points="${p1} ${p2} ${p3}" fill="${fg}" />`; }
+          case 'line':   return `<line x1="${(cx-rad).toFixed(3)}" y1="${cy.toFixed(3)}" x2="${(cx+rad).toFixed(3)}" y2="${cy.toFixed(3)}" stroke="${fg}" stroke-width="${sw.toFixed(3)}" stroke-linecap="round" />`;
+          case 'hex':    { const pts=regularPolygonPoints(6,cx,cy,rad,-Math.PI/2); return `<polygon points="${pts.map(p=>p.join(',')).join(' ')}" fill="${fg}" />`; }
+          case 'star':   { const pts=starPoints(5,cx,cy,rad,rad*0.5,-Math.PI/2); return `<polygon points="${pts.map(p=>p.join(',')).join(' ')}" fill="${fg}" />`; }
+          case 'plus':   { const t=Math.max(1,sw); const w=rad*2, h=t; return `<rect x="${(cx-w/2).toFixed(3)}" y="${(cy-h/2).toFixed(3)}" width="${w.toFixed(3)}" height="${h.toFixed(3)}" fill="${fg}" /><rect x="${(cx-h/2).toFixed(3)}" y="${(cy-w/2).toFixed(3)}" width="${h.toFixed(3)}" height="${w.toFixed(3)}" fill="${fg}" />`; }
+          case 'cross':  { const t=Math.max(1,sw); return `<g transform="translate(${cx.toFixed(3)} ${cy.toFixed(3)}) rotate(45)"><rect x="${(-rad).toFixed(3)}" y="${(-t/2).toFixed(3)}" width="${(rad*2).toFixed(3)}" height="${t.toFixed(3)}" fill="${fg}" /><rect x="${(-t/2).toFixed(3)}" y="${(-rad).toFixed(3)}" width="${t.toFixed(3)}" height="${(rad*2).toFixed(3)}" fill="${fg}" /></g>`; }
+          case 'chev':   { const w=rad*2, t=Math.max(1,sw), len=w*0.7; return `<g transform="translate(${cx.toFixed(3)} ${cy.toFixed(3)})"><rect x="${(-len/2).toFixed(3)}" y="${(-t/2 - w*0.15).toFixed(3)}" width="${len.toFixed(3)}" height="${t.toFixed(3)}" fill="${fg}" transform="rotate(-30)" /><rect x="${(-len/2).toFixed(3)}" y="${(-t/2 - w*0.15).toFixed(3)}" width="${len.toFixed(3)}" height="${t.toFixed(3)}" fill="${fg}" transform="rotate(30)" /></g>`; }
+          default: return '';
+        }
+      }
+      function regularPolygonPoints(n,cx,cy,r,rot=0){ const pts=[]; for(let i=0;i<n;i++){ const a=rot+i*(2*Math.PI/n); pts.push([+(cx+r*Math.cos(a)).toFixed(3), +(cy+r*Math.sin(a)).toFixed(3)]);} return pts; }
+      function starPoints(n,cx,cy,rOuter,rInner,rot=0){ const pts=[]; for(let i=0;i<n*2;i++){ const r=i%2===0?rOuter:rInner; const a=rot+i*(Math.PI/n); pts.push([+(cx+r*Math.cos(a)).toFixed(3), +(cy+r*Math.sin(a)).toFixed(3)]);} return pts; }
+    }
+
+    /* ---------- Core renderer ---------- */
+    function renderDither(p, W, H, P, E){
+      const cell=Math.max(1,Math.round(P.cell));
+      const step=Math.max(1,Math.round(P.cell + P.gap));
+      const ang=P.angle*Math.PI/180; const cosA=Math.cos(ang), sinA=Math.sin(ang);
+      const fit=computeContain(img.width,img.height,W,H); img.loadPixels();
+      const blendConst=(p[P.blend]||p.BLEND);
+      const tw = Math.max(0.3, P.strokeWeight * (cell*0.6)); // support tiny scale
+
+      p.push(); p.translate(W/2,H/2); p.rotate(ang); p.translate(-W/2,-H/2); p.blendMode(blendConst); p.noStroke();
+
+      for(let y=-step; y<H+step; y+=step){
+        for(let x=-step; x<W+step; x+=step){
+          let cx=x+step/2, cy=y+step/2;
+
+          // static jitter based on noise, deterministic
+          if (E.jitter>0){
+            const j = E.jitter * cell * 0.75;
+            const n1 = noise(cx*0.03, cy*0.03)-0.5;
+            const n2 = noise(100+cx*0.03, 100+cy*0.03)-0.5;
+            cx += n1*2*j; cy += n2*2*j;
+          }
+
+          const u=cx-W/2, v=cy-H/2;
+          const rx = u*cosA - v*sinA + W/2;
+          const ry = u*sinA + v*cosA + H/2;
+
+          const ix=(rx-fit.dx)/fit.scale, iy=(ry-fit.dy)/fit.scale;
+          let T=1;
+          if(ix>=0&&iy>=0&&ix<img.width&&iy<img.height){
+            const idx=4*(Math.floor(iy)*img.width+Math.floor(ix));
+            const r=img.pixels[idx], g=img.pixels[idx+1], b=img.pixels[idx+2];
+            T=luma(r,g,b,P.gamma);
+          }
+          if(P.invert) T=1-T;
+
+          if(P.mode==='ordered'){ const N=8; const gx=Math.floor((x/step)%N + N)%N; const gy=Math.floor((y/step)%N + N)%N; const threshold=BAYER8[gy][gx]; const L=Math.max(2,Math.round(P.levels)); const q=Math.floor(T*L)/(L-1); T=clamp((q+threshold/L)*0.999,0,1); }
+          else if(P.mode==='random'){ const L=Math.max(2,Math.round(P.levels)); const nn=(Math.random()-0.5)*(1.0/L); const q=Math.floor(clamp(T+nn,0,1)*L)/(L-1); T=clamp(q,0,1); }
+          else if(P.mode==='error'){ const L=Math.max(2,Math.round(P.levels)); const t2 = sample(ix+cell/fit.scale,iy); const t3 = sample(ix,iy+cell/fit.scale); T = clamp((T*2 + t2 + t3)/4, 0, 1); T = Math.round(T*(L-1))/(L-1); }
+
+          const rMax=(cell*0.5)*0.98; const rad=lerpN(rMax,0,T); if(rad<=0.2) continue;
+
+          drawShape(p, P.shape, cx, cy, rad, P.fg, tw);
+        }
+      }
+      p.pop(); p.blendMode(p.BLEND);
+
+      function sample(ix,iy){
+        if(ix>=0&&iy>=0&&ix<img.width&&iy<img.height){
+          const idx=4*(Math.floor(iy)*img.width+Math.floor(ix));
+          return luma(img.pixels[idx], img.pixels[idx+1], img.pixels[idx+2], P.gamma);
+        }
+        return 1;
+      }
+    }
+
+    function drawShape(p, shape, cx, cy, rad, fg, tw){
+      if (rad <= 0.2) return;
+      const ctx=p.drawingContext;
+      if(shape==='custom' && customShape.loaded){
+        const vb=customShape.viewBox; const s=(rad*2*0.98)/Math.max(vb.width,vb.height);
+        ctx.save(); ctx.translate(cx,cy); ctx.scale(s,s); ctx.translate(-vb.minX - vb.width/2, -vb.minY - vb.height/2);
+        ctx.fillStyle=fg; customShape.paths.forEach(path=>ctx.fill(path)); ctx.restore(); return;
+      }
+      p.push();
+      switch(shape){
+        case 'ring':{ const sw=Math.min(tw, rad*0.95); p.noFill(); p.stroke(fg); p.strokeWeight(sw); p.circle(cx,cy,rad*2); break; }
+        case 'line': p.noFill(); p.stroke(fg); p.strokeWeight(tw); p.line(cx-rad,cy,cx+rad,cy); break;
+        case 'plus':{ p.noStroke(); p.fill(fg); const t=Math.max(1,tw); p.rect(cx-rad, cy-t/2, rad*2, t); p.rect(cx-t/2, cy-rad, t, rad*2); break; }
+        case 'cross':{ p.noStroke(); p.fill(fg); p.push(); p.translate(cx,cy); p.rotate(Math.PI/4); const t=Math.max(1,tw); p.rect(-rad, -t/2, rad*2, t); p.rect(-t/2, -rad, t, rad*2); p.pop(); break; }
+        case 'chev':{ p.noStroke(); p.fill(fg); const w=rad*2, t=Math.max(1,tw), len=w*0.7; p.push(); p.translate(cx,cy); p.push(); p.rotate(-Math.PI/6); p.rect(-len/2, -t/2 - w*0.15, len, t); p.pop(); p.push(); p.rotate(Math.PI/6); p.rect(-len/2, -t/2 - w*0.15, len, t); p.pop(); p.pop(); break; }
+        case 'square':{ p.noStroke(); p.fill(fg); const s=rad*2/Math.SQRT2; p.square(cx-s, cy-s, s*2); break; }
+        case 'diamond':{ p.noStroke(); p.fill(fg); p.translate(cx,cy); p.rotate(Math.PI/4); const sd=rad*2/Math.SQRT2; p.square(-sd,-sd,sd*2); break; }
+        case 'triangle':{ p.noStroke(); p.fill(fg); const ss=rad*2, h=ss*Math.sqrt(3)/2; p.triangle(cx,cy-h/1.2,cx-ss/2,cy+h/2.4,cx+ss/2,cy+h/2.4); break; }
+        case 'hex':{ p.noStroke(); p.fill(fg); drawRegularPolygon(p,6,cx,cy,rad,-Math.PI/2); break; }
+        case 'star':{ p.noStroke(); p.fill(fg); drawStar(p,5,cx,cy,rad,rad*0.5,-Math.PI/2); break; }
+        case 'circle':
+        default: p.noStroke(); p.fill(fg); p.circle(cx,cy,rad*2); break;
+      }
+      p.pop();
+    }
+
+    function drawRegularPolygon(p,n,cx,cy,r,rot=0){ p.beginShape(); for(let i=0;i<n;i++){ const a=rot+i*(2*Math.PI/n); p.vertex(cx+r*Math.cos(a), cy+r*Math.sin(a)); } p.endShape(p.CLOSE); }
+    function drawStar(p,n,cx,cy,rOuter,rInner,rot=0){ p.beginShape(); for(let i=0;i<n*2;i++){ const r=i%2===0?rOuter:rInner; const a=rot+i*(Math.PI/n); p.vertex(cx+r*Math.cos(a), cy+r*Math.sin(a)); } p.endShape(p.CLOSE); }
+
+    /* ---------- Presets ---------- */
+    function loadPresetsIntoSelect(){
+      const sel = document.getElementById('presetSelect');
+      sel.innerHTML = '';
+      // built-ins
+      Object.keys(BUILTINS).forEach(name=>{
+        const opt = document.createElement('option'); opt.value = 'builtin::'+name; opt.textContent = name + ' *';
+        sel.appendChild(opt);
+      });
+      // user presets
+      const u = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
+      Object.keys(u).forEach(name=>{
+        const opt = document.createElement('option'); opt.value = 'user::'+name; opt.textContent = name;
+        sel.appendChild(opt);
+      });
+      sel.selectedIndex = 0;
+    }
+    function applySelectedPreset(){
+      const sel = document.getElementById('presetSelect').value;
+      if (!sel) return;
+      const [type,name] = sel.split('::');
+      const src = type==='builtin' ? BUILTINS[name] : JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}')[name];
+      if (!src) return;
+      Object.assign(params, src.params||{});
+      Object.assign(exp, src.exp||{});
+      // custom shape if saved
+      if (src.customShape && src.customShape.dList && src.customShape.viewBox){
+        Object.assign(customShape, {
+          loaded:true, name:name,
+          viewBox:src.customShape.viewBox,
+          dList:src.customShape.dList,
+          paths:src.customShape.dList.map(d=>new Path2D(d))
+        });
+        document.getElementById('btnShapeCustom').disabled = false;
+        params.shape = 'custom';
+      }
+      // sync UI basic fields
+      syncAllInputsFromState();
+      drawPreview();
+    }
+    function saveCurrentPreset(){
+      const name = prompt('Preset name');
+      if (!name) return;
+      const u = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
+      const payload = { params:{...params}, exp:{...exp} };
+      if (customShape.loaded){
+        payload.customShape = { dList:[...customShape.dList], viewBox:{...customShape.viewBox} };
+      }
+      u[name] = payload;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(u));
+      loadPresetsIntoSelect();
+      // select the saved one
+      document.getElementById('presetSelect').value = 'user::'+name;
+    }
+    function deleteSelectedPreset(){
+      const sel = document.getElementById('presetSelect').value;
+      if (!sel || !sel.startsWith('user::')) return;
+      const name = sel.split('::')[1];
+      const u = JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
+      delete u[name];
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(u));
+      loadPresetsIntoSelect();
+    }
+    function syncAllInputsFromState(){
+      const map = [
+        ['cell','cellNum',params,'cell'],['gap','gapNum',params,'gap'],['angle','angleNum',params,'angle'],
+        ['gamma','gammaNum',params,'gamma'],['levels','levelsNum',params,'levels'],['stroke','strokeNum',params,'strokeWeight'],
+        ['jit','jitNum',exp,'jitter']
+      ];
+      map.forEach(([sid,nid,obj,key])=>{
+        const s=document.getElementById(sid), n=document.getElementById(nid);
+        s.value = obj[key]; n.value = obj[key];
+      });
+      document.getElementById('mode').value = params.mode;
+      document.getElementById('invert').value = String(params.invert);
+      document.getElementById('blend').value = params.blend;
+      document.getElementById('fg').value = params.fg;
+      document.getElementById('bg').value = params.bg;
+      document.querySelectorAll('.shape-btn').forEach(b=>b.classList.remove('active'));
+      const btn = document.querySelector(`.shape-btn[data-shape="${params.shape}"]`);
+      if (btn) btn.classList.add('active');
+    }
+  </script>
+</body>
+</html>

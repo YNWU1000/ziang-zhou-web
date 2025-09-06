@@ -1,0 +1,314 @@
+/* ——— Base ——— */
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* prevent scrollbars */
+  background: #FFFDFD;
+  color: #000000;
+}
+
+body {
+  font-family: "ABC Monument Grotesk";
+  display: flex;
+  justify-content: flex-start; /* align left */
+  align-items: flex-start;     /* align top */
+  padding: 4px 28px 28px 28px;
+  box-sizing: border-box; /* padding stays inside viewport */
+  height: 100vh;
+  width: 100vw;
+}
+
+/* Type scale (responsive across all pages) */
+#out, #source {
+  font-size: clamp(12px, 6vw, 24px);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  position: absolute;
+  transform: translateY(-0.5em);
+  white-space: normal;
+}
+#source { display: none; }
+
+/* About page: use default type scale */
+
+/* Footer */
+footer {
+  position: absolute;
+  bottom: 12px;
+  left: 28px;
+  right: 28px;
+  font-size: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none; /* doesn’t block hover on main text */
+  z-index: 1001; /* ensure always on top of overlays */
+}
+footer span { pointer-events: auto; }
+footer .socials { display: grid; grid-auto-flow: column; gap: 14px; align-items: center; }
+footer .socials, footer .socials a { pointer-events: auto; }
+footer .socials a { width: 1em; height: 1em; display: inline-flex; align-items: center; justify-content: center; }
+footer .socials img { width: 1em; height: 1em; display: block; }
+
+
+/* Chunks */
+.chunk {
+  display: inline-block;
+  white-space: pre;
+  cursor: default; /* never show hand cursor */
+}
+
+/* Construct hover: swap leading ✎ with loading GIF */
+.construct-gif { width: 1em; height: 1em; vertical-align: -0.15em; display: none; }
+[data-key="construct"]:hover .construct-letter { display: none; }
+[data-key="construct"]:hover .construct-gif { display: inline-block; }
+
+
+/* (SVG icon styles removed) */
+
+.chunk:hover:not(.name) {
+  color: #ff2aa1;       /* pick any accent color */
+  transition: color ease;
+}
+
+.slogan:hover {
+  color: #684EFF;       /* pick any accent color */
+  transition: color ease;
+}
+
+/* Tool page: new hover color */
+body.tool-page .chunk:hover {
+  color: #00DA68;
+}
+
+/* Designer: loading cursor on hover (keep progress spinner) */
+.chunk[data-key="designer"]:hover { cursor: progress !important; }
+
+/* Links without underline, inherit color */
+.link { text-decoration: none; color: inherit; }
+.link:hover, .link:focus { text-decoration: none; }
+/* Never underline any anchors anywhere */
+a, a:hover, a:focus, a:active, a:visited { text-decoration: none !important; }
+.link:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: .2em;
+}
+
+/* Fonts (easy to pick by weight) */
+@font-face {
+  font-family: "ABC Monument Grotesk";
+  src: url("../fonts/ABCMonumentGrotesk-Light-Trial.woff2") format("woff2"),
+       url("../fonts/ABCMonumentGrotesk-Light-Trial.woff") format("woff");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "ABC Monument Grotesk";
+  src: url("../fonts/ABCMonumentGrotesk-Regular-Trial.woff2") format("woff2"),
+       url("../fonts/ABCMonumentGrotesk-Regular-Trial.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "ABC Monument Grotesk";
+  src: url("../fonts/ABCMonumentGrotesk-Medium-Trial.woff2") format("woff2"),
+       url("../fonts/ABCMonumentGrotesk-Medium-Trial.woff") format("woff");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "ABC Monument Grotesk";
+  src: url("../fonts/ABCMonumentGrotesk-Bold-Trial.woff2") format("woff2"),
+       url("../fonts/ABCMonumentGrotesk-Bold-Trial.woff") format("woff");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+
+
+/* Map tooltip */
+#mapTooltip {
+  position: fixed;
+  width: 280px;
+  height: 180px;
+  border: 1px solid rgba(0,0,0,.15);
+  box-shadow: 0 12px 32px rgba(0,0,0,.22);
+  border-radius: 10px;
+  overflow: hidden;
+  pointer-events: none; /* don't steal hover */
+  background: rgba(255,255,255,.85);
+  backdrop-filter: blur(8px) saturate(1.1);
+  -webkit-backdrop-filter: blur(8px) saturate(1.1);
+  transform: translate(-9999px, -9999px);
+}
+#mapTooltip iframe { width: 100%; height: 100%; border: 0; }
+
+
+/* Simple right-side gallery (max size, no crop) */
+#sideGallery {
+  position: fixed;
+  top: 50%;
+  right: 20px;                 /* margin from screen edge */
+  transform: translateY(-50%); /* vertically centered */
+  display: none;               /* shown on hover via JS */
+  pointer-events: none;        /* never intercepts hover */
+  width: min(60vw, 900px);     /* as big as possible */
+  height: 85vh;                /* as tall as possible */
+}
+
+#sideGallery #sideImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;         /* NEVER crop */
+  object-position: center;
+  display: block;
+}
+
+/* Bottom-right rabbit GIF sized like the gallery width */
+#cornerRabbit {
+  position: fixed;
+  right: 20px;
+  bottom: 40px;
+  width: min(30vw, 600px);
+  height: auto;
+  display: block;
+  z-index: 8;
+}
+
+/* (Removed home hover symbol styles) */
+
+/* Tool page: right-side info panel */
+#toolInfo {
+  position: fixed;
+  top: 28px;                      /* overridden by JS to align with #out */
+  right: 20px;
+  width: min(50vw, 560px);        /* compact text column block */
+  pointer-events: auto;           /* allow scrolling inside */
+  display: none;                  /* shown on hover */
+  color: #000;
+  max-height: 85vh;               /* scroll when content taller than viewport */
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+/* (toolSpacer removed) */
+/* spacer removed */
+#toolInfo .grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;  /* two equal columns */
+  gap: 10px 28px;                  /* vertical x horizontal gutter */
+  font-size: 16px;                 /* requested size */
+  line-height: 1.5;
+}
+#toolInfo .grid .heading { font-size: 20px; font-weight: 500; }
+#toolInfo .grid .muted { color: #9aa0a6; }
+#toolInfo .grid .desc { grid-column: 1 / -1; margin-top: 10px; }
+#toolInfo .grid .desc p { margin: 0 0 10px 0; }
+#toolInfo .grid .desc p:last-child { margin-bottom: 0; }
+#toolInfo .grid .photo { grid-column: 1 / -1; margin-top: 10px; }
+#toolInfo .grid .photo img { width: 100%; height: auto; display: block; }
+
+/* Tool runner panel (p5 container) */
+#toolRunner {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 80vw;                 /* requested: from right, width 80% */
+  height: 100vh;
+  background: #ffffff;
+  border-left: 1px solid rgba(0,0,0,.08);
+  box-shadow: -20px 0 40px rgba(0,0,0,.15);
+  display: none;               /* opened via JS */
+  z-index: 100;                /* above text and info panel */
+}
+#toolRunner iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #fff;
+}
+#toolRunnerClose {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: 16px;
+  line-height: 1;
+  color: inherit;
+  cursor: default;             /* consistent with site */
+}
+#toolRunnerClose:hover { color: #00DA68; }
+/* Blend the text with whatever is beneath only while gallery is active */
+body.gallery-active #out {
+  mix-blend-mode: exclusion;
+    color: #ffffff;   /* the “cool” invert-y look over images */
+}
+
+/* Optional: keep blending scoped cleanly */
+body { isolation: isolate; }   /* prevents blending from leaking to the page root */
+
+/* Global mobile tweaks: slightly reduced left padding */
+@media (max-width: 768px) {
+  body { padding: 4px 24px 24px 18px; }
+}
+
+/* Side page: ensure no overflow beyond content area */
+body.side-page #out,
+body.side-page #source { max-width: calc(100vw - 56px); overflow-wrap: anywhere; }
+
+/* (Removed mobile flow-under override for tool page) */
+
+/* About page: constrain paragraph to a comfortable column width */
+/* (About page text inherits base styles; no special width) */
+
+/* About photo on the right */
+body.about-page #aboutPhoto {
+  position: fixed;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  width: min(40vw, 400px);
+}
+body.about-page #aboutPhoto img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;           /* fill the frame; avoid blank bars */
+  object-position: center;     /* keep subject centered */
+  display: block;
+}
+
+@media (max-width: 960px) {
+  /* Match sideGallery padding/margins on mobile as well */
+  body.about-page #aboutPhoto {
+    display: block;
+    position: fixed;
+    top: 50%;
+    right: 20px;                 /* same as #sideGallery */
+    transform: translateY(-50%);
+    width: min(40vw, 400px);     /* same sizing rule as gallery */
+    height: 85vh;                /* same height as gallery */
+  }
+  body.about-page #aboutPhoto img { width: 100%; height: 100%; object-fit: contain; object-position: center; }
+}
+
+/* About page (mobile): responsive size only — keep typing effect */
+@media (max-width: 768px) {
+  body.about-page #out,
+  body.about-page #source {
+    font-size: clamp(12px, 4.8vw, 20px);
+    max-width: calc(100vw - 56px);
+    overflow-wrap: anywhere;
+  }
+}
