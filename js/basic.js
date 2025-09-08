@@ -606,7 +606,7 @@ document.addEventListener('app:paragraph-ready', (e) => {
       const now = performance.now();
       if (now > endAt) { if (active===0) finish(); return; }
       const s = document.createElement('span'); s.textContent = EMOJIS[(Math.random()*EMOJIS.length)|0];
-      s.style.fontSize = baseSize * 4 + '1px';
+      s.style.fontSize = baseSize * 30 + 'px';
       s.style.position = 'fixed'; s.style.willChange='transform';
       const y0 = -60 - Math.random()*60, x0 = -innerHeight + Math.random()*(innerWidth + innerHeight);
       s.style.top = y0+'px'; s.style.left = x0+'px';
