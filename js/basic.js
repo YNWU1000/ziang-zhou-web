@@ -213,9 +213,14 @@
         a.addEventListener && a.addEventListener('blur', hide);
         // Open runner for tools that specify a p5 HTML via data-p5
         a.addEventListener('click', (e) => {
-          if (!runner || !frame) return;
           const url = a.getAttribute('data-p5');
-          if (!url) return; // allow normal link behavior when not provided
+          // If no data-p5, show the tool info template on click
+          if (!url){
+            e.preventDefault && e.preventDefault();
+            show(key);
+            return;
+          }
+          if (!runner || !frame) return;
           e.preventDefault();
           hide();
           frame.src = url;

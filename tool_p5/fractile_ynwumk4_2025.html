@@ -1,0 +1,1387 @@
+  <!-- enjoy! created by Ziang Zhou/YNWU -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Fractile - Ziang Zhou</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.2/p5.min.js"></script>
+  <!-- gif.js for GIF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    html, body { margin:0; padding:0; overflow:hidden; height:100%;
+      font-family:"JetBrains Mono",monospace; background:#ebebeb; color:#646464; }
+    canvas { display:block; position:absolute; top:0; left:0; z-index:1; background:white; }
+
+    #control-panel { position:absolute; top:0; right:0; width:240px; height:100%;
+      background:#ebebeb; padding:12px; box-sizing:border-box; z-index:10; display:flex; flex-direction:column; }
+
+    .tabs { display:flex; gap:6px; margin-bottom:12px; }
+    .tab-btn { flex:1; padding:8px 10px; background:#fff; border:0; cursor:pointer; font-size:10px; font-weight:600;
+      text-transform:uppercase; letter-spacing:.5px; color:#646464; }
+    .tab-btn:hover{ background:#d0e1ff; color:#000; }
+    .tab-btn.active{ background:#000; color:#fff; }
+    .tab { display:none; overflow-y:auto; }
+    .tab.active{ display:block; }
+
+    .section { margin-bottom:28px; border-top:1px solid #e3e3e3; padding-top:10px; }
+    .section-title { font-size:12px; color:#000; font-weight:600; margin-bottom:10px; letter-spacing:.5px; cursor:pointer; display:flex; align-items:center; gap:6px; }
+    .section-title::before{ content:'▼'; font-size:10px; color:#888; }
+    .section.collapsed > .section-title::before{ content:'▶'; }
+    .section.collapsed > .section-body{ display:none; }
+    .section-body { display:block; }
+
+    .param-group { margin-bottom:8px; }
+    .param-label { font-size:10px; color:#646464; margin-bottom:5px; display:block; text-transform:uppercase; letter-spacing:.5px; }
+    .param-row { display:flex; align-items:center; gap:8px; }
+    input[type="number"], select { width:100%; background:#fff; border:1px solid #ddd; color:#000; font-size:10px; font-weight:600; padding:6px 8px; box-sizing:border-box; }
+    input[type="range"]{ flex:1; appearance:none; height:3px; background:#ddd; }
+    input[type="range"]::-webkit-slider-thumb{ appearance:none; width:12px; height:12px; background:#000; cursor:pointer; }
+    input[type="range"]::-moz-range-thumb{ width:12px; height:12px; background:#000; cursor:pointer; border:none; }
+    .row2 { display:flex; gap:8px; }
+    .row2 > * { flex:1; }
+    .small { font-size:10px; color:#888; margin-top:4px; }
+
+    .button-group{ display:flex; flex-direction:column; gap:2px; }
+    button{ width:100%; padding:8px 12px; border:0; background:#fff; color:#646464; font-size:10px; font-weight:600;
+      text-transform:uppercase; letter-spacing:.5px; cursor:pointer; transition:.15s; text-align:left; }
+    button:hover{ background:#d0e1ff; color:#000; }
+    button.primary{ background:#000; color:#fff; text-align:center; }
+    button.primary:hover{ background:#333; }
+
+    /* shape weight matrix */
+    /* Mixer grid for shape mixing */
+    #shapesMatrix{ display:grid; grid-template-columns: repeat(4, 1fr); gap:6px; }
+    .mixer-channel{ display:flex; flex-direction:column; align-items:center; padding:4px; background:#fff; border:1px solid #ddd; position:relative; }
+    .mixer-channel.disabled{ opacity:0.5; }
+    .mixer-channel.replaced .mixer-name{ color:#9aa1a9; }
+    .mixer-icon{ width:28px; height:28px; display:flex; align-items:center; justify-content:center; cursor:pointer; margin-bottom:6px; }
+    /* Preserve inline SVG styling so ring icons stay hollow; rely on row opacity for disabled state */
+    .mixer-slider{ height:96px; width:28px; display:flex; align-items:center; justify-content:center; }
+    .mixer-slider input[type="range"]{ width:96px; transform:rotate(-90deg); appearance:none; height:3px; background:#ddd; outline:none; }
+    .mixer-slider input[type="range"]::-webkit-slider-thumb{ appearance:none; width:10px; height:10px; background:#000; cursor:pointer; border-radius:0; }
+    .mixer-slider input[type="range"]::-moz-range-thumb{ width:10px; height:10px; background:#000; cursor:pointer; border:none; border-radius:0; }
+    .mixer-name{ font-size:9px; color:#000; font-weight:600; margin-top:4px; text-align:center; }
+    .mixer-val{ font-size:9px; color:#000; font-weight:600; margin-top:2px; }
+    .svg-btn{ font-size:9px; padding:2px 6px; border:1px solid #ddd; background:#fff; color:#000; cursor:pointer; display:block; width:36px; text-align:center; margin-top:4px; }
+    .svg-btn.active{ background:#000; color:#fff; border-color:#000; }
+
+    .mini-buttons { display:flex; gap:6px; margin-top:6px; }
+    .mini-buttons button{ flex:1; text-align:center; padding:6px 0; }
+
+    #stats { font-size:10px; color:#888; margin-top:6px; }
+    .muted { color:#888; font-size:10px; }
+    .hex-input{ width:72px; background:#fff; border:1px solid #ddd; color:#000; font-size:10px; font-weight:600; padding:4px 6px; box-sizing:border-box; font-family:"JetBrains Mono", monospace; text-transform:uppercase; }
+  </style>
+</head>
+<body>
+
+  <div id="control-panel">
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="render">Render</button>
+      <button class="tab-btn" data-tab="animation">Animation</button>
+      <button class="tab-btn" data-tab="export">Export</button>
+    </div>
+
+    <!-- ================= TAB: RENDER ================= -->
+    <div class="tab active" id="tab-render">
+      <!-- Canvas -->
+      <div class="section">
+        <div class="section-title">CANVAS</div>
+        <div class="section-body">
+          <div class="row2">
+            <div class="param-group"><label class="param-label">W</label><input type="number" id="canvasW" min="128" max="20000" value="1024"></div>
+            <div class="param-group"><label class="param-label">H</label><input type="number" id="canvasH" min="128" max="20000" value="1024"></div>
+          </div>
+          <div class="button-group">
+            <button id="btnApplyCanvas" class="primary">Resize</button>
+            <button id="btnFitWindow">Fit to Screen</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tiling -->
+      <div class="section">
+        <div class="section-title">TILING</div>
+        <div class="section-body">
+          <div class="param-group">
+            <label class="param-label">Mode</label>
+            <select id="tilingMode">
+              <option value="grid" selected>Grid</option>
+              <option value="lsys">L‑system</option>
+              <option value="voronoi">Voronoi</option>
+              <option value="quadtree">Quadtree (Image)</option>
+            </select>
+          </div>
+          <div class="param-group"><label class="param-label">Seed</label>
+            <div class="row2"><input type="number" id="seedNum" value="123456789"><button id="btnNewSeed">New Seed</button></div>
+          </div>
+
+          <!-- Grid: Splits -->
+          <div class="param-group" id="gridSplits">
+            <label class="param-label">Splits</label>
+            <div class="param-row" style="align-items:center;">
+              <span class="muted">2×2</span>
+              <input type="range" id="w2" min="0" max="1" step="0.01" value="0.50">
+              <div class="wval" id="w2v">0.50</div>
+            </div>
+            <div class="param-row" style="align-items:center;">
+              <span class="muted">3×3</span>
+              <input type="range" id="w3" min="0" max="1" step="0.01" value="0.30">
+              <div class="wval" id="w3v">0.30</div>
+            </div>
+            <div class="param-row" style="align-items:center;">
+              <span class="muted">4×4</span>
+              <input type="range" id="w4" min="0" max="1" step="0.01" value="0.20">
+              <div class="wval" id="w4v">0.20</div>
+            </div>
+            <div class="small">Sliders set relative ratios; they’re normalized.</div>
+          </div>
+
+          <!-- L-system -->
+          <div id="lsysControls" style="display:none;">
+            <div class="param-group"><label class="param-label">Axiom</label><input id="axiom" value="A"></div>
+            <div class="param-group"><label class="param-label">Rule A</label><input id="ruleA" value="AB"></div>
+            <div class="param-group"><label class="param-label">Rule B</label><input id="ruleB" value="AC"></div>
+            <div class="param-group"><label class="param-label">Rule C</label><input id="ruleC" value="BA"></div>
+            <div class="param-group"><label class="param-label">Steps</label>
+              <div class="param-row"><input type="range" id="lsysSteps" min="1" max="12" step="1" value="6"><input type="number" id="lsysStepsNum" min="1" max="12" step="1" value="6"></div>
+            </div>
+            <div class="small">Map A→2×2, B→3×3, C→4×4 across depth.</div>
+          </div>
+
+          <!-- Voronoi -->
+          <div id="voronoiControls" style="display:none;">
+            <div class="param-group"><label class="param-label">Cells</label>
+              <div class="param-row"><input type="range" id="vCells" min="8" max="400" step="1" value="120"><input type="number" id="vCellsNum" min="8" max="400" step="1" value="120"></div>
+            </div>
+          </div>
+
+          <!-- Quadtree -->
+          <div id="quadControls" style="display:none;">
+            <div class="param-group"><label class="param-label">Image</label>
+              <div class="row2">
+                <button id="btnLoadImg">Load</button>
+                <button id="btnClearImg">Clear</button>
+              </div>
+              <input id="fileImg" type="file" accept="image/*" style="display:none">
+              <div class="small" id="imgInfo">No image.</div>
+            </div>
+            <div class="param-group"><label class="param-label">Threshold</label>
+              <div class="param-row"><input type="range" id="qThresh" min="0" max="1" step="0.01" value="0.25"><input type="number" id="qThreshNum" min="0" max="1" step="0.01" value="0.25"></div>
+            </div>
+            <div class="param-group"><label class="param-label">Mode</label>
+              <select id="qMode">
+                <option value="variance" selected>Variance</option>
+                <option value="brightness">Brightness</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Shared recursion -->
+          <div class="param-group">
+            <label class="param-label">Levels</label>
+            <div class="param-row"><input type="range" id="maxDepth" min="1" max="10" step="1" value="6"><input type="number" id="maxDepthNum" min="1" max="10" step="1" value="6"></div>
+          </div>
+          <div class="param-group">
+            <label class="param-label">Min Size (px)</label>
+            <div class="param-row"><input type="range" id="minSize" min="4" max="128" step="1" value="16"><input type="number" id="minSizeNum" min="4" max="128" step="1" value="16"></div>
+          </div>
+          <div class="param-group">
+            <label class="param-label">Margin (% of cell)</label>
+            <div class="param-row"><input type="range" id="pad" min="0" max="0.25" step="0.005" value="0.10"><input type="number" id="padNum" min="0" max="0.25" step="0.005" value="0.10"></div>
+          </div>
+          <div class="param-group">
+            <label class="param-label">Stop Chance</label>
+            <div class="row2">
+              <div class="param-group"><label class="param-label">Start</label><input type="number" id="stopMin" min="0" max="0.9" step="0.01" value="0.05"></div>
+              <div class="param-group"><label class="param-label">End</label><input type="number" id="stopMax" min="0" max="0.9" step="0.01" value="0.60"></div>
+            </div>
+            <div class="param-group"><label class="param-label">Curve</label>
+              <div class="param-row"><input type="range" id="stopCurve" min="0.25" max="3" step="0.05" value="1.0"><input type="number" id="stopCurveNum" min="0.25" max="3" step="0.05" value="1.0"></div>
+            </div>
+          </div>
+          <div class="param-group">
+            <label class="param-label">Max Shapes</label>
+            <input type="number" id="maxShapes" min="100" max="200000" value="50000">
+          </div>
+          <div id="stats"></div>
+          <div id="stats"></div>
+        </div>
+      </div>
+
+      <!-- Shape Mix -->
+      <div class="section">
+        <div class="section-title">SHAPE MIXER</div>
+        <div class="section-body">
+          <div id="shapesMatrix"></div>
+          <div class="mini-buttons">
+            <button id="btnAllShapes">All On</button>
+            <button id="btnNoShapes">All Off</button>
+            <button id="btnNormalize">Normalize</button>
+          </div>
+
+          <div class="param-group" style="margin-top:8px;">
+            <label class="param-label">Style</label>
+            <select id="styleMode">
+              <option value="fill" selected>Fill</option>
+              <option value="stroke">Stroke</option>
+              <option value="mix">Mix</option>
+            </select>
+          </div>
+          <div class="param-group" id="fillChanceRow" style="display:none;">
+            <label class="param-label">Fill % (Mix)</label>
+            <div class="param-row"><input type="range" id="fillChance" min="0" max="1" step="0.01" value="0.7"><input type="number" id="fillChanceNum" min="0" max="1" step="0.01" value="0.7"></div>
+          </div>
+          <div class="param-group" id="strokeRow">
+            <label class="param-label">Stroke</label>
+            <div class="param-row"><input type="range" id="stroke" min="0.5" max="6" step="0.1" value="2"><input type="number" id="strokeNum" min="0.5" max="6" step="0.1" value="2"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Color -->
+      <div class="section">
+        <div class="section-title">COLOR</div>
+        <div class="section-body">
+          <div class="row2">
+            <div class="param-group"><label class="param-label">Ink</label><input type="color" id="fg" value="#E4572E"></div>
+            <div class="param-group"><label class="param-label">Paper</label><input type="color" id="bg" value="#0E0E10"></div>
+          </div>
+          <div class="param-group"><label class="param-label">Color Mode</label>
+            <select id="colorMode">
+              <option value="single" selected>Single</option>
+              <option value="palette">Random</option>
+            </select>
+          </div>
+          <div class="param-group"><label class="param-label">Palette</label><select id="palette"></select></div>
+          <div class="param-group"><label class="param-label">Palette Source</label>
+            <select id="paletteSource">
+              <option value="builtin" selected>Presets</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
+          <div class="param-group" id="customPaletteGroup" style="display:none;">
+            <label class="param-label">Custom Colors (HEX)</label>
+            <div class="param-row" style="flex-wrap:wrap; gap:6px;">
+              <input class="hex-input" id="palHex1" placeholder="#E4572E" maxlength="7">
+              <input class="hex-input" id="palHex2" placeholder="#F3A712" maxlength="7">
+              <input class="hex-input" id="palHex3" placeholder="#A8C686" maxlength="7">
+              <input class="hex-input" id="palHex4" placeholder="#4CA3DD" maxlength="7">
+              <input class="hex-input" id="palHex5" placeholder="#FFFFFF" maxlength="7">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= TAB: ANIMATION ================= -->
+    <div class="tab" id="tab-animation">
+      <div class="section">
+        <div class="section-title">PLAYBACK</div>
+        <div class="param-group"><label class="param-label">Play</label>
+          <select id="animPlay"><option value="off" selected>Off</option><option value="on">On</option></select>
+        </div>
+        <div class="param-group"><label class="param-label">Speed (FPS)</label>
+          <div class="param-row"><input type="range" id="fps" min="1" max="60" step="1" value="12"><input type="number" id="fpsNum" min="1" max="60" step="1" value="12"></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">ANIMATE</div>
+        <div class="param-group"><label class="param-label">Randomize</label>
+          <select id="animReseed"><option value="off" selected>No</option><option value="on">Yes</option></select>
+        </div>
+        <div class="param-group"><label class="param-label">Split Wobble</label>
+          <div class="param-row"><input type="range" id="wobble" min="0" max="1" step="0.01" value="0"><input type="number" id="wobbleNum" min="0" max="1" step="0.01" value="0"></div>
+        </div>
+        <div class="param-group"><label class="param-label">Wobble Speed</label>
+          <div class="param-row"><input type="range" id="wobbleSpeed" min="0" max="5" step="0.1" value="1.5"><input type="number" id="wobbleSpeedNum" min="0" max="5" step="0.1" value="1.5"></div>
+        </div>
+        <div class="param-group">
+          <label class="param-label">Shape Cycle</label>
+          <div class="row2">
+            <select id="shapeCycleMode">
+              <option value="off" selected>Off</option>
+              <option value="filled">Filled</option>
+              <option value="lines">Lines</option>
+              <option value="polygons">Polygons</option>
+              <option value="all">All</option>
+            </select>
+            <input type="number" id="shapeCyclePeriod" min="10" max="600" value="120" title="Frames per phase">
+          </div>
+        </div>
+        <div class="param-group"><label class="param-label">Shape Shuffles</label>
+          <div class="row2">
+            <select id="shapeShuffle"><option value="off" selected>No</option><option value="on">Yes</option></select>
+            <input type="number" id="shapeShufflePeriod" min="10" max="600" value="120" title="Frames per shuffle">
+            <input type="range" id="shapeShuffleDensity" min="0" max="1" step="0.05" value="0.5" title="Enabled fraction">
+          </div>
+          <div class="small">Randomly enables/disables shapes every N frames; density sets fraction enabled.</div>
+        </div>
+        <div class="param-group"><label class="param-label">Color Cycle</label>
+          <div class="row2"><select id="animPalette"><option value="off" selected>No</option><option value="on">Yes</option></select><input type="number" id="palettePeriod" min="5" max="600" value="20"></div>
+        </div>
+        <div class="param-group"><label class="param-label">Level Pulse</label>
+          <div class="row2"><input type="number" id="depthMin" min="1" max="10" value="4"><input type="number" id="depthMax" min="1" max="10" value="7"></div>
+          <div class="param-row"><input type="range" id="depthSpeed" min="0" max="5" step="0.1" value="1.0"><input type="number" id="depthSpeedNum" min="0" max="5" step="0.1" value="1.0"></div>
+        </div>
+        <div class="param-group"><label class="param-label">Style Flicker (Mix)</label>
+          <div class="row2"><input type="number" id="fillMin" min="0" max="1" step="0.05" value="0.5"><input type="number" id="fillMax" min="0" max="1" step="0.05" value="0.9"></div>
+          <div class="param-row"><input type="range" id="fillSpeed" min="0" max="5" step="0.1" value="0.8"><input type="number" id="fillSpeedNum" min="0" max="5" step="0.1" value="0.8"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= TAB: EXPORT ================= -->
+    <div class="tab" id="tab-export">
+      <div class="section">
+        <div class="section-title">EXPORT</div>
+        <div class="param-group">
+          <div class="muted" id="exportSize">Size: —</div>
+          <div class="small">Always exports at current canvas size.</div>
+        </div>
+        <div class="button-group">
+          <button id="btnExportPNG" class="primary">PNG</button>
+          <button id="btnExportSVG" class="primary">SVG</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">EXPORT VIDEO (FRAMES)</div>
+        <div class="row2">
+          <div class="param-group"><label class="param-label">Frames</label><input type="number" id="vidFrames" min="300" max="600" value="360"></div>
+          <div class="param-group"><label class="param-label">FPS</label><input type="number" id="vidFps" min="1" max="60" value="24"></div>
+        </div>
+        <div class="button-group">
+          <button id="btnExportGIF">GIF</button>
+          <button id="btnExportMP4">MP4 / WebM</button>
+        </div>
+        <div class="small">Uses frame count (300–600). MP4 falls back to WebM if not supported.</div>
+        <div class="small" id="exportStatus"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  /* ============== State & Constants ============== */
+  let shapesLog = [];
+  let drawnShapes = 0;
+  let offImg = null; // for quadtree
+  let imgInfoEl;
+
+  const PALETTES = [
+    ["#0e0e10","#e4572e","#f3a712","#a8c686","#4ca3dd","#ffffff"],
+    ["#111111","#8ecae6","#219ebc","#ffb703","#fb8500","#e0fbfc"],
+    ["#0b0c10","#66fcf1","#45a29e","#c5c6c7","#1f2833"],
+    ["#0f1021","#95d5b2","#ffd166","#e63946","#f1faee","#a8dadc"],
+    ["#0B1026","#FDE047","#0B0F19","#EBF2FA","#1966E3"]
+  ];
+  let paletteIndex = 0;
+  let paletteSource = 'builtin';
+  let customPalette = ['#E4572E','#F3A712','#A8C686','#4CA3DD','#FFFFFF'];
+
+  const SHAPES = [
+    {id:'rect',    label:'Rectangle', kind:'filled'},
+    {id:'diamond', label:'Diamond',   kind:'poly'},
+    {id:'triangle',label:'Triangle',  kind:'poly'},
+    {id:'circle',  label:'Circle',    kind:'filled'},
+    {id:'oval',    label:'Oval',      kind:'filled'},
+    {id:'ring',    label:'Ring',      kind:'line'},
+    {id:'line',    label:'Line',      kind:'line'},
+    {id:'plus',    label:'Plus',      kind:'line'},
+    {id:'cross',   label:'Cross',     kind:'line'},
+    {id:'pent',    label:'Pentagon',  kind:'poly', sides:5},
+    {id:'hex',     label:'Hexagon',   kind:'poly', sides:6},
+    {id:'oct',     label:'Octagon',   kind:'poly', sides:8},
+    {id:'custom',  label:'SVG',       kind:'filled'}
+  ];
+
+  const customShape = { loaded:false, viewBox:{minX:0,minY:0,width:100,height:100}, dList:[], paths:[] };
+  // Per-shape SVG replacements: id -> {viewBox, dList}
+  const shapeRepl = {};
+
+  const params = {
+    canvasW:1024, canvasH:1024,
+    tiling:'grid',
+    // grid weights
+    weights:{2:0.5,3:0.3,4:0.2},
+    // lsys
+    axiom:'A', ruleA:'AB', ruleB:'AC', ruleC:'BA', lsysSteps:6,
+    // voronoi
+    vCells:120,
+    // quadtree
+    qThresh:0.25, qMode:'variance',
+    // shared recursion
+    maxDepth:6, minSize:16, padding:0.10, stopMin:0.05, stopMax:0.60, stopCurve:1.0,
+    maxShapes:50000,
+    // style/color
+    styleMode:'fill', fillChance:0.7, strokeWeight:2,
+    colorMode:'single', fg:'#E4572E', bg:'#0E0E10', seed:123456789,
+    // shapes
+    shapeWeights: SHAPES.reduce((a,s)=>{a[s.id]=(s.id==='rect'||s.id==='circle'||s.id==='triangle')?0.5:0.2; return a;},{}),
+    shapeEnabled: SHAPES.reduce((a,s)=>{a[s.id]=(s.id!=='custom'); return a;},{}),
+  };
+
+  const anim = {
+    play:false, fps:12, t:0,
+    reseed:false,
+    wobbleAmp:0, wobbleSpeed:1.5,
+    paletteCycle:false, palettePeriod:20,
+    shapeCycleMode:'off', shapeCyclePeriod:120,
+    shapeShuffle:false, shapeShufflePeriod:120, shapeShuffleDensity:0.5,
+    depthMin:4, depthMax:7, depthSpeed:1.0,
+    fillMin:0.5, fillMax:0.9, fillSpeed:0.8
+  };
+
+  // Frame-based capture (no time-based "recording")
+  const capture = {
+    active:false, type:null, frames:0, fps:24,
+    gif:null, mediaRecorder:null, chunks:[],
+    restorePlay:false, restoreFps:12
+  };
+
+  /* ============== p5 lifecycle ============== */
+  function setup(){
+    createCanvas(params.canvasW, params.canvasH);
+    pixelDensity(2);
+    noLoop();
+    buildUI();
+    loadPalettes();          // <-- missing before; caused the blank page
+    updateExportSize();
+    render();
+  }
+
+  function draw(){
+    // Only animate when playing or capturing frames
+    if (!anim.play && !capture.active) return;
+
+    frameRate(anim.fps);
+    anim.t += 0.016;
+
+    // Animation hooks
+    if (anim.reseed) params.seed = Math.floor((1e9) * (0.5 + 0.5*Math.sin(anim.t*1.3)));
+    if (anim.paletteCycle && frameCount % Math.max(1,Math.floor(anim.palettePeriod)) === 0){
+      paletteIndex = (paletteIndex + 1) % PALETTES.length;
+    }
+
+    const live = {};
+
+    // optional wobble for grid splits
+    if (params.tiling==='grid' && anim.wobbleAmp>0){
+      live.overrideWeights = {
+        2: Math.max(0, params.weights[2] + anim.wobbleAmp*Math.sin(anim.t*anim.wobbleSpeed+0.0)),
+        3: Math.max(0, params.weights[3] + anim.wobbleAmp*Math.sin(anim.t*anim.wobbleSpeed+1.2)),
+        4: Math.max(0, params.weights[4] + anim.wobbleAmp*Math.sin(anim.t*anim.wobbleSpeed+2.4)),
+      };
+    }
+
+    // shape-set cycle bias
+    if (anim.shapeCycleMode!=='off'){
+      const eff = {};
+      const mask = getGroupMask(anim.shapeCycleMode, Math.floor(frameCount/Math.max(1,anim.shapeCyclePeriod)));
+      const bias = 2.5;
+      for (const s of SHAPES){
+        eff[s.id] = (params.shapeWeights[s.id]||0) * (mask[s.id]?bias:1);
+      }
+      live.overrideShapeWeights = eff;
+    }
+
+    // shape shuffles: randomly enable/disable shapes periodically
+    if (anim.shapeShuffle && frameCount % Math.max(1, Math.floor(anim.shapeShufflePeriod)) === 0){
+      let any=false;
+      SHAPES.forEach(s=>{
+        if (s.id==='custom') return;
+        const en = Math.random() < anim.shapeShuffleDensity;
+        params.shapeEnabled[s.id]=en; any = any || en;
+      });
+      if (!any){ params.shapeEnabled['rect']=true; }
+      // refresh mixer UI to reflect states
+      buildShapesMatrix();
+    }
+
+    // depth pulse
+    const dmin=Math.min(anim.depthMin,anim.depthMax), dmax=Math.max(anim.depthMin,anim.depthMax);
+    live.overrideMaxDepth = Math.round((dmin+dmax)/2 + (dmax-dmin)/2*Math.sin(anim.t*anim.depthSpeed));
+
+    // style flicker
+    if (params.styleMode==='mix'){
+      const fmin=Math.min(anim.fillMin,anim.fillMax), fmax=Math.max(anim.fillMin,anim.fillMax);
+      live.overrideFillChance = fmin + (fmax-fmin)*(0.5+0.5*Math.sin(anim.t*anim.fillSpeed));
+    }
+
+    render(live);
+
+    // Frame-based capture tick
+    if (capture.active){
+      if (capture.type==='gif' && capture.gif){
+        capture.gif.addFrame(document.querySelector('canvas'), {copy:true, delay: 1000/capture.fps});
+      }
+      // progress + ETA display
+      if (!window.__exportStatusEl) window.__exportStatusEl = document.getElementById('exportStatus');
+      if (window.__exportStatusEl && (capture.total||0) > 0){
+        const now = performance.now();
+        const elapsed = Math.max(1e-3, (now - (capture.startTime||now)) / 1000);
+        const framesRemaining = Math.max(0, capture.frames);
+        const done = Math.max(0, (capture.total || 0) - framesRemaining);
+        const eta = done>0 ? Math.max(0, (elapsed/done) * (framesRemaining)) : 0;
+        window.__exportStatusEl.textContent = `Exporting ${capture.type ? capture.type.toUpperCase() : ''} — ${done}/${capture.total} frames · elapsed ${elapsed.toFixed(1)}s · ETA ${eta.toFixed(1)}s`;
+      }
+      if (--capture.frames <= 0){
+        finishCapture();
+      }
+    }
+  }
+
+  /* ============== Render ============== */
+  function render(opts={}){
+    randomSeed(params.seed);
+    noiseSeed(params.seed);
+    drawnShapes = 0;
+    shapesLog = [];
+
+    background(params.bg);
+
+    const shapeW = normalizeShapeWeights(opts.overrideShapeWeights || params.shapeWeights, params.shapeEnabled);
+
+    if (params.tiling === 'grid' || params.tiling === 'lsys'){
+      let Nseq = null;
+      if (params.tiling === 'lsys'){
+        Nseq = lsysToSplits(params.lsysSteps, params.axiom, {A:params.ruleA, B:params.ruleB, C:params.ruleC});
+      }
+      const weightsN = normalizeWeights({
+        2: opts.overrideWeights?.[2] ?? params.weights[2],
+        3: opts.overrideWeights?.[3] ?? params.weights[3],
+        4: opts.overrideWeights?.[4] ?? params.weights[4],
+      });
+      subdivide(0,0,width,height,0, weightsN, shapeW, {
+        maxDepth: opts.overrideMaxDepth ?? params.maxDepth,
+        fillChance: opts.overrideFillChance ?? params.fillChance,
+        Nseq
+      });
+    }
+    else if (params.tiling === 'voronoi'){
+      const cells = voronoiCells(params.vCells, width, height);
+      for (let i=0;i<cells.length;i++){
+        const poly = cells[i];
+        const c = polygonCentroid(poly);
+        const r = Math.max(1, distToEdges(poly, c.x, c.y));
+        drawShapeInCell(c.x - r, c.y - r, r*2, r*2, 0, shapeW, { fillChance: params.fillChance });
+        drawnShapes++;
+        if (drawnShapes>params.maxShapes) break;
+      }
+    }
+    else if (params.tiling === 'quadtree'){
+      quadtree(0,0,width,height,0, shapeW, { maxDepth: opts.overrideMaxDepth ?? params.maxDepth });
+    }
+
+    document.getElementById('stats').textContent = `seed ${params.seed} · shapes ${drawnShapes.toLocaleString()}`;
+  }
+
+  function subdivide(x,y,w,h,depth,weightsN,shapeW,live){
+    if (drawnShapes > params.maxShapes) return;
+
+    const maxDepth = live.maxDepth;
+    const t = Math.min(1, depth/Math.max(1,maxDepth));
+    const curve = Math.pow(t, params.stopCurve);
+    const stopProb = lerp(params.stopMin, params.stopMax, curve);
+
+    const tooSmall = (w < params.minSize) || (h < params.minSize);
+    const tooDeep  = (depth >= maxDepth);
+    const early    = random() < stopProb;
+
+    if (tooSmall || tooDeep || early){
+      drawShapeInCell(x,y,w,h,depth,shapeW,{ fillChance: live.fillChance ?? params.fillChance });
+      drawnShapes++;
+      return;
+    }
+
+    let N;
+    if (params.tiling === 'lsys' && live.Nseq){
+      const sym = live.Nseq[Math.min(depth, live.Nseq.length-1)];
+      N = (sym==='A')?2:(sym==='B')?3:4;
+    } else {
+      N = pickN(weightsN);
+    }
+
+    // Compute integer-aligned split boundaries to avoid subpixel seams
+    const xB = new Array(N+1).fill(0).map((_,k)=> Math.round(x + (w*k)/N));
+    const yB = new Array(N+1).fill(0).map((_,k)=> Math.round(y + (h*k)/N));
+    for (let j=0;j<N;j++){
+      for (let i=0;i<N;i++){
+        if (drawnShapes > params.maxShapes) return;
+        const x0=xB[i], x1=xB[i+1], y0=yB[j], y1=yB[j+1];
+        subdivide(x0, y0, Math.max(0,x1-x0), Math.max(0,y1-y0), depth+1, weightsN, shapeW, live);
+      }
+    }
+  }
+
+  /* ============== L-system ============== */
+  function lsysToSplits(steps, axiom, rules){
+    let s = axiom;
+    for (let i=0;i<steps;i++){
+      let out = '';
+      for (const ch of s){
+        if (ch==='A') out += (rules.A||'A');
+        else if (ch==='B') out += (rules.B||'B');
+        else if (ch==='C') out += (rules.C||'C');
+        else out += ch;
+      }
+      s = out;
+    }
+    return s.replace(/[^ABC]/g,'').slice(0, steps) || 'A';
+  }
+
+  /* ============== Voronoi (half-plane) ============== */
+  function voronoiCells(n, W, H){
+    const seeds = [];
+    for (let i=0;i<n;i++) seeds.push({x: random(20, W-20), y: random(20, H-20)});
+    const bbox = [{x:0,y:0},{x:W,y:0},{x:W,y:H},{x:0,y:H}];
+    const cells = [];
+    for (let i=0;i<n;i++){
+      let poly = bbox.slice();
+      const si = seeds[i];
+      for (let j=0;j<n;j++){
+        if (i===j) continue;
+        const sj = seeds[j];
+        const vx = sj.x - si.x, vy = sj.y - si.y;
+        const m = (sj.x*sj.x + sj.y*sj.y - si.x*si.x - si.y*si.y)/2;
+        poly = clipPolygonHalfPlane(poly, vx, vy, m);
+        if (poly.length===0) break;
+      }
+      if (poly.length>0) cells.push(poly);
+    }
+    return cells;
+  }
+  function clipPolygonHalfPlane(poly, ax, ay, m){
+    const out = [];
+    for (let i=0;i<poly.length;i++){
+      const A = poly[i], B = poly[(i+1)%poly.length];
+      const Ain = (ax*A.x + ay*A.y) <= m;
+      const Bin = (ax*B.x + ay*B.y) <= m;
+      if (Ain && Bin){ out.push(B); }
+      else if (Ain && !Bin){
+        const I = intersectLine(A,B,ax,ay,m);
+        if (I) out.push(I);
+      } else if (!Ain && Bin){
+        const I = intersectLine(A,B,ax,ay,m);
+        if (I) out.push(I);
+        out.push(B);
+      }
+    }
+    return out;
+  }
+  function intersectLine(A,B,ax,ay,m){
+    const dx = B.x - A.x, dy = B.y - A.y;
+    const denom = ax*dx + ay*dy;
+    if (Math.abs(denom) < 1e-6) return null;
+    const t = (m - (ax*A.x + ay*A.y)) / denom;
+    return {x: A.x + t*dx, y: A.y + t*dy};
+  }
+  function polygonCentroid(poly){
+    let a=0, cx=0, cy=0;
+    for (let i=0;i<poly.length;i++){
+      const p=poly[i], q=poly[(i+1)%poly.length];
+      const cross = p.x*q.y - q.x*p.y;
+      a += cross; cx += (p.x+q.x)*cross; cy += (p.y+q.y)*cross;
+    }
+    a = a*0.5;
+    if (Math.abs(a) < 1e-6) return {x:poly[0].x, y:poly[0].y};
+    return {x: cx/(6*a), y: cy/(6*a)};
+  }
+  function distToEdges(poly, x, y){
+    let d = Infinity;
+    for (let i=0;i<poly.length;i++){
+      const p=poly[i], q=poly[(i+1)%poly.length];
+      d = Math.min(d, pointToSegmentDist(x,y,p.x,p.y,q.x,q.y));
+    }
+    return d;
+  }
+  function pointToSegmentDist(px,py,x1,y1,x2,y2){
+    const vx=x2-x1, vy=y2-y1, ux=px-x1, uy=py-y1;
+    const t = Math.max(0, Math.min(1, (ux*vx+uy*vy)/(vx*vx+vy*vy)));
+    const dx = x1 + t*vx - px, dy = y1 + t*vy - py;
+    return Math.hypot(dx,dy);
+  }
+
+  /* ============== Quadtree (image) ============== */
+  function quadtree(x,y,w,h,depth, shapeW, live){
+    if (drawnShapes>params.maxShapes) return;
+    const tooSmall = (w < params.minSize) || (h < params.minSize);
+    const tooDeep  = (depth >= (live?.maxDepth ?? params.maxDepth));
+
+    let split = false;
+    if (!offImg || tooSmall || tooDeep){
+      split = false;
+    } else {
+      const metric = sampleMetric(x,y,w,h);
+      split = (params.qMode==='variance') ? (metric.variance > params.qThresh) : (metric.mean > params.qThresh);
+    }
+
+    if (!split){
+      drawShapeInCell(x,y,w,h,depth,shapeW,{fillChance: params.fillChance});
+      drawnShapes++; return;
+    }
+
+    // Integer-aligned quadrant boundaries to avoid seams
+    const midX = Math.round(x + w/2), midY = Math.round(y + h/2);
+    const x0=x, x1=midX, x2=x + w;
+    const y0=y, y1=midY, y2=y + h;
+    quadtree(x0,y0, Math.max(0,x1-x0), Math.max(0,y1-y0), depth+1,shapeW,live);
+    quadtree(x1,y0, Math.max(0,x2-x1), Math.max(0,y1-y0), depth+1,shapeW,live);
+    quadtree(x0,y1, Math.max(0,x1-x0), Math.max(0,y2-y1), depth+1,shapeW,live);
+    quadtree(x1,y1, Math.max(0,x2-x1), Math.max(0,y2-y1), depth+1,shapeW,live);
+  }
+
+  function sampleMetric(x,y,w,h){
+    const nx=4, ny=4;
+    let sum=0, sum2=0, count=0;
+    for (let j=0;j<ny;j++){
+      for (let i=0;i<nx;i++){
+        const sx = Math.floor(x + (i+0.5)*w/nx);
+        const sy = Math.floor(y + (j+0.5)*h/ny);
+        const c = offImg.get(sx,sy);
+        const b = (0.2126*c[0] + 0.7152*c[1] + 0.0722*c[2]) / 255;
+        sum += b; sum2 += b*b; count++;
+      }
+    }
+    const mean = sum/count;
+    const variance = Math.max(0, sum2/count - mean*mean);
+    return {mean, variance};
+  }
+
+  /* ============== Terminal drawing & logging ============== */
+  function drawShapeInCell(x,y,w,h,depth,shapeW, live){
+    const pad = params.padding * Math.min(w,h);
+    let ix = x + pad, iy = y + pad, iw = w - 2*pad, ih = h - 2*pad;
+    // Align to device pixels to avoid anti-aliased seams when margin is 0
+    ix = Math.round(ix); iy = Math.round(iy);
+    iw = Math.max(0, Math.round(iw)); ih = Math.max(0, Math.round(ih));
+    if (iw<=0 || ih<=0) return;
+
+    const col = pickColor(depth);
+    const mode = params.styleMode;
+    let useFill = true;
+    if (mode==='stroke') useFill = false;
+    if (mode==='mix') useFill = random() < (live.fillChance ?? params.fillChance);
+
+    if (useFill){ noStroke(); fill(col); } else { noFill(); stroke(col); strokeWeight(params.strokeWeight); }
+
+    const shapeId = weightedPick(shapeW);
+    drawShapeById(shapeId, ix, iy, iw, ih, useFill, col);
+  }
+
+  function drawShapeById(shapeId, ix, iy, iw, ih, useFill, col){
+    // Per-shape SVG replacement
+    const repl = shapeRepl[shapeId];
+    if (repl){
+      const vb=repl.viewBox; const sfx=(Math.min(iw,ih)*0.95)/Math.max(vb.width,vb.height);
+      const ctx=drawingContext; ctx.save();
+      ctx.translate(ix+iw/2, iy+ih/2); ctx.scale(sfx,sfx); ctx.translate(-vb.minX - vb.width/2, -vb.minY - vb.height/2);
+      ctx.fillStyle='#777777';
+      try { repl.dList.forEach(d=>ctx.fill(new Path2D(d))); } catch(_){ /* ignore */ }
+      ctx.restore();
+      // Log as custom for export (filled grey)
+      logCustom(ix+iw/2, iy+ih/2, Math.min(iw,ih)*0.95, Math.min(iw,ih)*0.95, true, '#777777', {viewBox:repl.viewBox, dList:repl.dList});
+      return;
+    }
+    const cx = ix + iw/2, cy = iy + ih/2, smin = Math.min(iw, ih);
+    switch (shapeId){
+      case 'rect': rect(ix,iy,iw,ih); logRect(ix,iy,iw,ih,useFill,col); break;
+      case 'diamond': { const s=smin; push(); translate(cx,cy); rotate(Math.PI/4); rect(-s/2,-s/2,s,s); pop(); logDiamond(cx,cy,s,useFill,col);} break;
+      case 'triangle': {
+        const side=smin, h=side*Math.sqrt(3)/2;
+        const x1=cx, y1=cy - h/2, x2=cx - side/2, y2=cy + h/2, x3=cx + side/2, y3=cy + h/2;
+        if (!useFill){ beginShape(); vertex(x1,y1); vertex(x2,y2); vertex(x3,y3); endShape(CLOSE);} else triangle(x1,y1,x2,y2,x3,y3);
+        logTriangle([[x1,y1],[x2,y2],[x3,y3]], useFill, col);
+      } break;
+      case 'circle': { const d=smin; ellipse(cx,cy,d,d); logEllipse(cx,cy,d/2,d/2,useFill,col);} break;
+      case 'oval': { const w2=iw*0.95, h2=ih*0.75; ellipse(cx,cy,w2,h2); logEllipse(cx,cy,w2/2,h2/2,useFill,col);} break;
+      case 'ring': { const d=smin; noFill(); stroke(col); strokeWeight(Math.min(params.strokeWeight, d*0.1)); ellipse(cx,cy,d,d); logRing(cx,cy,d/2, params.strokeWeight, col);} break;
+      case 'line': {
+        const horiz = random()<0.5;
+        const sw = Math.min(params.strokeWeight, smin*0.15);
+        stroke(col); strokeWeight(sw);
+        if (horiz){ line(ix, iy+ih/2, ix+iw, iy+ih/2); logLine(ix, iy+ih/2, ix+iw, iy+ih/2, sw, col); }
+        else { line(ix+iw/2, iy, ix+iw/2, iy+ih); logLine(ix+iw/2, iy, ix+iw/2, iy+ih, sw, col); }
+      } break;
+      case 'plus': { const t=Math.max(1, params.strokeWeight*2);
+        noStroke(); fill(col); rect(cx - smin/2, cy - t/2, smin, t); rect(cx - t/2, cy - smin/2, t, smin); logPlus(cx,cy,smin,t,col);
+      } break;
+      case 'cross': { const t=Math.max(1, params.strokeWeight*2);
+        noStroke(); fill(col); push(); translate(cx,cy); rotate(Math.PI/4); rect(-smin/2, -t/2, smin, t); rect(-t/2, -smin/2, t, smin); pop(); logCross(cx,cy,smin,t,col);
+      } break;
+      case 'pent': drawRegularPolygon(5,cx,cy,smin/2,useFill,col); logPolygon(5,cx,cy,smin/2,useFill,col); break;
+      case 'hex':  drawRegularPolygon(6,cx,cy,smin/2,useFill,col); logPolygon(6,cx,cy,smin/2,useFill,col); break;
+      case 'oct':  drawRegularPolygon(8,cx,cy,smin/2,useFill,col); logPolygon(8,cx,cy,smin/2,useFill,col); break;
+      case 'custom':
+        if (customShape.loaded){ drawCustomSVG(ix,iy,iw,ih,useFill,col); logCustom(ix,iy,iw,ih,useFill,col,customShape); }
+        else { rect(ix,iy,iw,ih); logRect(ix,iy,iw,ih,useFill,col); }
+        break;
+    }
+  }
+
+  function drawRegularPolygon(n,cx,cy,r,useFill,col){
+    if (useFill){ noStroke(); fill(col); } else { noFill(); stroke(col); strokeWeight(params.strokeWeight); }
+    beginShape();
+    for(let i=0;i<n;i++){ const a=-Math.PI/2 + i*(2*Math.PI/n); vertex(cx + r*Math.cos(a), cy + r*Math.sin(a)); }
+    endShape(CLOSE);
+  }
+
+  function drawCustomSVG(ix,iy,iw,ih,useFill,col){
+    const vb=customShape.viewBox;
+    const scale = (Math.min(iw,ih)*0.95)/Math.max(vb.width, vb.height);
+    const ctx = drawingContext;
+    ctx.save();
+    ctx.translate(ix + iw/2, iy + ih/2);
+    ctx.scale(scale, scale);
+    ctx.translate(-vb.minX - vb.width/2, -vb.minY - vb.height/2);
+    if (useFill){ ctx.fillStyle=col; ctx.strokeStyle='transparent'; customShape.paths.forEach(p=>ctx.fill(p)); }
+    else { ctx.fillStyle='transparent'; ctx.strokeStyle=col; ctx.lineWidth=params.strokeWeight/scale; customShape.paths.forEach(p=>ctx.stroke(p)); }
+    ctx.restore();
+  }
+
+  /* ============== Logging for export ============== */
+  function logRect(x,y,w,h,fill,col){ shapesLog.push({type:'rect',style:fill?{fill:col}:{stroke:col,sw:params.strokeWeight},geom:{x,y,w,h}}); }
+  function logDiamond(cx,cy,side,fill,col){ shapesLog.push({type:'diamond',style:fill?{fill:col}:{stroke:col,sw:params.strokeWeight},geom:{cx,cy,side}}); }
+  function logTriangle(pts,fill,col){ shapesLog.push({type:'triangle',style:fill?{fill:col}:{stroke:col,sw:params.strokeWeight},geom:{p:pts}}); }
+  function logEllipse(cx,cy,rx,ry,fill,col){ shapesLog.push({type:'ellipse',style:fill?{fill:col}:{stroke:col,sw:params.strokeWeight},geom:{cx,cy,rx,ry}}); }
+  function logRing(cx,cy,r,sw,col){ shapesLog.push({type:'ring',style:{stroke:col,sw:sw},geom:{cx,cy,r}}); }
+  function logLine(x1,y1,x2,y2,sw,col){ shapesLog.push({type:'line',style:{stroke:col,sw},geom:{x1,y1,x2,y2}}); }
+  function logPlus(cx,cy,size,t,col){ shapesLog.push({type:'plus',style:{fill:col},geom:{cx,cy,size,t}}); }
+  function logCross(cx,cy,size,t,col){ shapesLog.push({type:'x',style:{fill:col},geom:{cx,cy,size,t,rot:Math.PI/4}}); }
+  function logPolygon(sides,cx,cy,r,fill,col){ shapesLog.push({type:'polygon',style:fill?{fill:col}:{stroke:col,sw:params.strokeWeight},geom:{sides,cx,cy,r}}); }
+  function logCustom(x,y,w,h,fill,col,svg){ shapesLog.push({type:'custom',style:fill?{fill:col}:{stroke:col,sw:params.strokeWeight},geom:{x,y,w,h},svg:{dList:[...svg.dList],viewBox:{...svg.viewBox}}}); }
+
+  /* ============== PNG / SVG Export ============== */
+  function exportPNG(){
+    const g = createGraphics(width,height);
+    g.pixelDensity(1); g.background(params.bg);
+    drawLogToGraphics(g, shapesLog, 1, 1);
+    g.canvas.toBlob(blob=>{
+      const url=URL.createObjectURL(blob);
+      dl(url, `fractal_${width}x${height}.png`);
+      URL.revokeObjectURL(url); g.remove();
+    },'image/png');
+  }
+  function exportSVG(){
+    let svg = [];
+    svg.push(`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`);
+    svg.push(`<rect width="${width}" height="${height}" fill="${params.bg}"/>`);
+    for (const s of shapesLog){
+      const st=s.style;
+      if (s.type==='rect'){ const {x,y,w,h}=s.geom; svg.push(el('rect',{x,y,width:w,height:h},st)); }
+      else if (s.type==='ellipse'){ const {cx,cy,rx,ry}=s.geom; svg.push(el('ellipse',{cx,cy,rx,ry},st)); }
+      else if (s.type==='triangle'){ const pts=s.geom.p.map(([x,y])=>`${x.toFixed(3)},${y.toFixed(3)}`).join(' '); svg.push(el('polygon',{points:pts},st)); }
+      else if (s.type==='diamond'){ const {cx,cy,side}=s.geom; const x=cx, y=cy, w=side, h=side;
+        svg.push(el('rect',{x:x-w/2,y:y-h/2,width:w,height:h,transform:`translate(${x} ${y}) rotate(45) translate(${-x} ${-y})`},st)); }
+      else if (s.type==='ring'){ const {cx,cy,r}=s.geom; svg.push(`<circle cx="${cx.toFixed(3)}" cy="${cy.toFixed(3)}" r="${r.toFixed(3)}" fill="none" stroke="${st.stroke}" stroke-width="${st.sw.toFixed(3)}" />`); }
+      else if (s.type==='line'){ const {x1,y1,x2,y2}=s.geom; svg.push(`<line x1="${x1.toFixed(3)}" y1="${y1.toFixed(3)}" x2="${x2.toFixed(3)}" y2="${y2.toFixed(3)}" stroke="${st.stroke}" stroke-width="${st.sw.toFixed(3)}" stroke-linecap="butt" />`); }
+      else if (s.type==='plus' || s.type==='x'){ const {cx,cy,size,t}=s.geom; const S=size, T=t;
+        if (s.type==='plus'){
+          svg.push(`<rect x="${(cx-S/2).toFixed(3)}" y="${(cy-T/2).toFixed(3)}" width="${S.toFixed(3)}" height="${T.toFixed(3)}" fill="${st.fill}" />`);
+          svg.push(`<rect x="${(cx-T/2).toFixed(3)}" y="${(cy-S/2).toFixed(3)}" width="${T.toFixed(3)}" height="${S.toFixed(3)}" fill="${st.fill}" />`);
+        } else {
+          svg.push(`<g transform="translate(${cx.toFixed(3)} ${cy.toFixed(3)}) rotate(45)">`);
+          svg.push(`<rect x="${(-S/2).toFixed(3)}" y="${(-T/2).toFixed(3)}" width="${S.toFixed(3)}" height="${T.toFixed(3)}" fill="${st.fill}" />`);
+          svg.push(`<rect x="${(-T/2).toFixed(3)}" y="${(-S/2).toFixed(3)}" width="${T.toFixed(3)}" height="${S.toFixed(3)}" fill="${st.fill}" />`);
+          svg.push(`</g>`);
+        }
+      } else if (s.type==='polygon'){ const {sides,cx,cy,r}=s.geom; const pts=[]; for(let i=0;i<sides;i++){ const a=-Math.PI/2+i*(2*Math.PI/sides); pts.push(`${(cx+r*Math.cos(a)).toFixed(3)},${(cy+r*Math.sin(a)).toFixed(3)}`);} svg.push(el('polygon',{points:pts.join(' ')},st)); }
+      else if (s.type==='custom'){ const {x,y,w,h}=s.geom; const vb=s.svg.viewBox; const sfx=Math.min(w,h)*0.95/Math.max(vb.width, vb.height);
+        const cx=(x+w/2).toFixed(3), cy=(y+h/2).toFixed(3);
+        const base=`translate(${cx} ${cy}) scale(${sfx.toFixed(5)}) translate(${(-vb.minX - vb.width/2).toFixed(3)} ${(-vb.minY - vb.height/2).toFixed(3)})`;
+        const style = st.fill ? `fill="${st.fill}"` : `fill="none" stroke="${st.stroke}" stroke-width="${(st.sw/sfx).toFixed(3)}"`;
+        svg.push(`<g ${style} transform="${base}">`); s.svg.dList.forEach(d=>svg.push(`<path d="${d}"/>`)); svg.push(`</g>`);
+      }
+    }
+    svg.push(`</svg>`);
+    const blob=new Blob([svg.join('\n')],{type:'image/svg+xml'}); const url=URL.createObjectURL(blob); dl(url, `fractal_${width}x${height}.svg`); URL.revokeObjectURL(url);
+  }
+
+  function drawLogToGraphics(g, log, sx, sy){
+    g.push();
+    for (const s of log){
+      if (s.style.fill){ g.noStroke(); g.fill(s.style.fill); } else { g.noFill(); g.stroke(s.style.stroke); g.strokeWeight(s.style.sw*sx); }
+      if (s.type==='rect'){ const {x,y,w,h}=s.geom; g.rect(x*sx,y*sy,w*sx,h*sy); }
+      else if (s.type==='ellipse'){ const {cx,cy,rx,ry}=s.geom; g.ellipse(cx*sx,cy*sy,rx*2*sx,ry*2*sy); }
+      else if (s.type==='triangle'){ g.beginShape(); s.geom.p.forEach(([x,y])=>g.vertex(x*sx,y*sy)); g.endShape(g.CLOSE); }
+      else if (s.type==='diamond'){ const {cx,cy,side}=s.geom; g.push(); g.translate(cx*sx,cy*sy); g.rotate(Math.PI/4); g.rect(-side*sx/2,-side*sy/2,side*sx,side*sy); g.pop(); }
+      else if (s.type==='ring'){ const {cx,cy,r}=s.geom; g.noFill(); g.stroke(s.style.stroke); g.strokeWeight(s.style.sw*sx); g.ellipse(cx*sx,cy*sy,r*2*sx,r*2*sy); }
+      else if (s.type==='line'){ const {x1,y1,x2,y2}=s.geom; g.stroke(s.style.stroke); g.strokeWeight(s.style.sw*sx); g.line(x1*sx,y1*sy,x2*sx,y2*sy); }
+      else if (s.type==='plus'){ const {cx,cy,size,t}=s.geom; const x=cx*sx, y=cy*sy, S=size*sx, T=t*sx; g.rect(x-S/2,y-T/2,S,T); g.rect(x-T/2,y-S/2,T,S); }
+      else if (s.type==='x'){ const {cx,cy,size,t}=s.geom; const x=cx*sx, y=cy*sy, S=size*sx, T=t*sx; g.push(); g.translate(x,y); g.rotate(Math.PI/4); g.rect(-S/2,-T/2,S,T); g.rect(-T/2,-S/2,T,S); g.pop(); }
+      else if (s.type==='polygon'){ const {sides,cx,cy,r}=s.geom; g.beginShape(); for(let i=0;i<sides;i++){ const a=-Math.PI/2+i*(2*Math.PI/sides); g.vertex((cx+r*Math.cos(a))*sx,(cy+r*Math.sin(a))*sy);} g.endShape(g.CLOSE); }
+      else if (s.type==='custom'){
+        const ctx = g.drawingContext; const {x,y,w,h}=s.geom; const vb=s.svg.viewBox; const sfx=Math.min(w*sx,h*sy)*0.95/Math.max(vb.width, vb.height);
+        ctx.save(); ctx.translate((x*sx)+(w*sx)/2, (y*sy)+(h*sy)/2); ctx.scale(sfx,sfx); ctx.translate(-vb.minX - vb.width/2, -vb.minY - vb.height/2);
+        if (s.style.fill){ ctx.fillStyle=s.style.fill; s.svg.dList.forEach(d=>ctx.fill(new Path2D(d))); }
+        else { ctx.strokeStyle=s.style.stroke; ctx.lineWidth=s.style.sw/sfx; s.svg.dList.forEach(d=>ctx.stroke(new Path2D(d))); }
+        ctx.restore();
+      }
+    }
+    g.pop();
+  }
+
+  function el(tag, attrs, style){
+    const a = Object.entries(attrs).map(([k,v])=>`${k}="${Number.isFinite(v)?v.toFixed(3):v}"`).join(' ');
+    if (style.fill) return `<${tag} ${a} fill="${style.fill}" />`;
+    return `<${tag} ${a} fill="none" stroke="${style.stroke}" stroke-width="${style.sw?style.sw.toFixed(3):1}" />`;
+  }
+  function dl(url, filename){
+    const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  /* ============== Color ============== */
+  function pickColor(depth){
+    if (params.colorMode === 'single') return params.fg;
+    const pal = (paletteSource==='custom')
+      ? [params.bg, ...cleanCustomPalette(customPalette)]
+      : (PALETTES[paletteIndex] || PALETTES[0]);
+    // 'palette' mode
+    const inks = pal.slice(1);
+    return inks[Math.floor(random(Math.max(1, inks.length)))] || params.fg;
+  }
+
+  function cleanCustomPalette(arr){
+    const out=[];
+    for (let i=0;i<Math.min(5, arr.length); i++){
+      const v=(arr[i]||'').trim();
+      if (/^#([0-9a-fA-F]{6})$/.test(v)) out.push(v.toUpperCase());
+    }
+    return out.length?out:[params.fg];
+  }
+
+  /* ============== Utils ============== */
+  function normalizeWeights(w){
+    const sum = (w[2]||0)+(w[3]||0)+(w[4]||0);
+    if (sum<=0) return {2:1,3:0,4:0};
+    return {2:w[2]/sum, 3:w[3]/sum, 4:w[4]/sum};
+  }
+  function pickN(w){
+    // w is an object like {2:...,3:...,4:...} and should already be normalized
+    let r = random();
+    const w2 = w[2]||0, w3 = w[3]||0; // w4 is implied
+    if ((r -= w2) <= 0) return 2;
+    if ((r -= w3) <= 0) return 3;
+    return 4;
+  }
+  function normalizeShapeWeights(w, enabled){
+    let sum=0; const out={};
+    for (const s of SHAPES){ const id=s.id; const val = (enabled[id] ? Math.max(0, w[id]||0) : 0); out[id]=val; sum+=val; }
+    if (sum<=0){ out['rect']=1; return out; }
+    for (const id in out) out[id]/=sum; return out;
+  }
+  function weightedPick(map){
+    let r = random();
+    for (const id of Object.keys(map)){ const w = map[id]; if (w<=0) continue; if ((r-=w)<=0) return id; }
+    return Object.keys(map)[0];
+  }
+  function lerp(a,b,t){ return a + (b-a)*t; }
+  function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+
+  function getGroupMask(mode, phase){
+    const filled = new Set(SHAPES.filter(s=>s.kind==='filled' || s.id==='diamond').map(s=>s.id));
+    const lines  = new Set(SHAPES.filter(s=>s.kind==='line').map(s=>s.id));
+    const polys  = new Set(SHAPES.filter(s=>s.kind==='poly').map(s=>s.id));
+    const inGroup=new Set();
+    if (mode==='filled') filled.forEach(i=>inGroup.add(i));
+    else if (mode==='lines') lines.forEach(i=>inGroup.add(i));
+    else if (mode==='polygons') polys.forEach(i=>inGroup.add(i));
+    else if (mode==='all'){ [filled,lines,polys][phase % 3].forEach(i=>inGroup.add(i)); }
+    const mask={}; SHAPES.forEach(s=>mask[s.id]=inGroup.has(s.id)); return mask;
+  }
+
+  /* ============== UI ============== */
+  function buildUI(){
+    // Tabs
+    document.querySelectorAll('.tab-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+      });
+    });
+
+    // Canvas
+    const cw=document.getElementById('canvasW'), ch=document.getElementById('canvasH');
+    document.getElementById('btnApplyCanvas').onclick=()=>{
+      const w=clamp(parseInt(cw.value||1024),128,20000), h=clamp(parseInt(ch.value||1024),128,20000);
+      params.canvasW=w; params.canvasH=h; resizeCanvas(w,h,false); updateExportSize(); render();
+    };
+    document.getElementById('btnFitWindow').onclick=()=>{
+      const w=Math.max(128, window.innerWidth - 240), h=Math.max(128, window.innerHeight);
+      cw.value=w; ch.value=h; params.canvasW=w; params.canvasH=h; resizeCanvas(w,h,false); updateExportSize(); render();
+    };
+
+    // Tiling mode
+    const modeSel=document.getElementById('tilingMode');
+    const gridSplits=document.getElementById('gridSplits');
+    const lsysControls=document.getElementById('lsysControls');
+    const voronoiControls=document.getElementById('voronoiControls');
+    const quadControls=document.getElementById('quadControls');
+    modeSel.onchange=()=>{
+      params.tiling=modeSel.value;
+      gridSplits.style.display = (params.tiling==='grid')?'block':'none';
+      lsysControls.style.display = (params.tiling==='lsys')?'block':'none';
+      voronoiControls.style.display = (params.tiling==='voronoi')?'block':'none';
+      quadControls.style.display = (params.tiling==='quadtree')?'block':'none';
+      render();
+    };
+
+    // Grid splits
+    linkSliderVal('w2','w2v', v=>{ params.weights[2]=+v; render(); });
+    linkSliderVal('w3','w3v', v=>{ params.weights[3]=+v; render(); });
+    linkSliderVal('w4','w4v', v=>{ params.weights[4]=+v; render(); });
+
+    // L-system
+    document.getElementById('axiom').onchange=e=>{ params.axiom=e.target.value||'A'; render(); };
+    document.getElementById('ruleA').onchange=e=>{ params.ruleA=e.target.value||'A'; render(); };
+    document.getElementById('ruleB').onchange=e=>{ params.ruleB=e.target.value||'B'; render(); };
+    document.getElementById('ruleC').onchange=e=>{ params.ruleC=e.target.value||'C'; render(); };
+    syncPair('lsysSteps','lsysStepsNum',params,'lsysSteps', v=>clamp(Math.round(v),1,12));
+
+    // Voronoi
+    syncPair('vCells','vCellsNum',params,'vCells', v=>clamp(Math.round(v),8,400));
+
+    // Quadtree
+    imgInfoEl=document.getElementById('imgInfo');
+    document.getElementById('btnLoadImg').onclick=()=>document.getElementById('fileImg').click();
+    document.getElementById('btnClearImg').onclick=()=>{ offImg=null; imgInfoEl.textContent='No image.'; render(); };
+    document.getElementById('fileImg').addEventListener('change', e=>{
+      const f=e.target.files?.[0]; if(!f) return;
+      const r=new FileReader();
+      r.onload=ev=>{
+        loadImage(ev.target.result, (img)=>{
+          offImg = img; offImg.loadPixels(); // ensure sampling works everywhere
+          imgInfoEl.textContent = `${img.width}×${img.height}`;
+          render();
+        }, ()=>{ alert('Image load failed'); });
+      };
+      r.readAsDataURL(f);
+    });
+    syncPair('qThresh','qThreshNum',params,'qThresh', v=>clamp(+v,0,1));
+    document.getElementById('qMode').onchange=e=>{ params.qMode=e.target.value; render(); };
+
+    // Shared recursion
+    syncPair('maxDepth','maxDepthNum',params,'maxDepth', v=>clamp(Math.round(v),1,10));
+    syncPair('minSize','minSizeNum',params,'minSize', v=>clamp(Math.round(v),4,128));
+    syncPair('pad','padNum',params,'padding', v=>clamp(+v,0,0.25));
+    syncPair('stopCurve','stopCurveNum',params,'stopCurve', v=>clamp(+v,0.25,3));
+    document.getElementById('stopMin').onchange=e=>{ params.stopMin=clamp(+e.target.value,0,0.9); render(); };
+    document.getElementById('stopMax').onchange=e=>{ params.stopMax=clamp(+e.target.value,0,0.9); render(); };
+    document.getElementById('maxShapes').onchange=e=>{ params.maxShapes=clamp(parseInt(e.target.value||50000),100,200000); render(); };
+
+    // Shape matrix
+    buildShapesMatrix();
+
+    // Style
+    const styleSel=document.getElementById('styleMode');
+    styleSel.onchange=()=>{ params.styleMode=styleSel.value; document.getElementById('fillChanceRow').style.display=(params.styleMode==='mix')?'block':'none'; render(); };
+    syncPair('fillChance','fillChanceNum',params,'fillChance', v=>clamp(+v,0,1));
+    syncPair('stroke','strokeNum',params,'strokeWeight', v=>clamp(+v,0.5,6));
+
+    document.getElementById('btnAllShapes').onclick=()=>{ SHAPES.forEach(s=>params.shapeEnabled[s.id]=true); buildShapesMatrix(); render(); };
+    document.getElementById('btnNoShapes').onclick=()=>{ SHAPES.forEach(s=>params.shapeEnabled[s.id]=false); buildShapesMatrix(); render(); };
+    document.getElementById('btnNormalize').onclick=()=>{ params.shapeWeights = normalizeShapeWeights(params.shapeWeights, params.shapeEnabled); buildShapesMatrix(); render(); };
+
+    // Color & seed
+    const fg=document.getElementById('fg'), bg=document.getElementById('bg');
+    fg.oninput=e=>{ params.fg=e.target.value; render(); };
+    bg.oninput=e=>{ params.bg=e.target.value; render(); };
+
+    const colorMode=document.getElementById('colorMode'); colorMode.onchange=e=>{ params.colorMode=e.target.value; render(); };
+
+    const seedNum=document.getElementById('seedNum');
+    seedNum.addEventListener('change', e=>{ params.seed = parseInt(e.target.value||0)||0; render(); });
+    document.getElementById('btnNewSeed').onclick=()=>{ params.seed=Math.floor(Math.random()*1e9); seedNum.value=params.seed; render(); };
+
+    // Palette source and custom palette inputs
+    const palSrc=document.getElementById('paletteSource');
+    const customGroup=document.getElementById('customPaletteGroup');
+    const updateCustomVis=()=>{
+      const useCustom = (palSrc.value==='custom');
+      customGroup.style.display = useCustom? 'block':'none';
+      paletteSource = useCustom? 'custom':'builtin';
+      document.getElementById('palette').disabled = useCustom;
+      render();
+    };
+    palSrc.onchange=updateCustomVis; updateCustomVis();
+
+    const hexIds=['palHex1','palHex2','palHex3','palHex4','palHex5'];
+    hexIds.forEach((id,idx)=>{
+      const el=document.getElementById(id);
+      if (!el) return;
+      el.value = customPalette[idx] || '';
+      el.addEventListener('change', ()=>{ customPalette[idx] = el.value.trim(); render(); });
+    });
+
+    // Animation
+    const playSel=document.getElementById('animPlay');
+    playSel.onchange=()=>{ anim.play=(playSel.value==='on'); if (anim.play) loop(); else noLoop(); };
+    syncPair('fps','fpsNum',anim,'fps', v=>clamp(Math.round(v),1,60));
+    document.getElementById('animReseed').onchange=e=>{ anim.reseed=(e.target.value==='on'); };
+    syncPair('wobble','wobbleNum',anim,'wobbleAmp', v=>clamp(+v,0,1));
+    syncPair('wobbleSpeed','wobbleSpeedNum',anim,'wobbleSpeed', v=>clamp(+v,0,5));
+    document.getElementById('shapeCycleMode').onchange=e=>{ anim.shapeCycleMode=e.target.value; };
+    document.getElementById('shapeCyclePeriod').onchange=e=>{ anim.shapeCyclePeriod=clamp(parseInt(e.target.value||120),10,600); };
+    document.getElementById('shapeShuffle').onchange=e=>{ anim.shapeShuffle=(e.target.value==='on'); };
+    document.getElementById('shapeShufflePeriod').onchange=e=>{ anim.shapeShufflePeriod=clamp(parseInt(e.target.value||120),10,600); };
+    const shufDen=document.getElementById('shapeShuffleDensity');
+    shufDen.addEventListener('input',()=>{ anim.shapeShuffleDensity=clamp(parseFloat(shufDen.value||0.5),0,1); });
+    document.getElementById('animPalette').onchange=e=>{ anim.paletteCycle=(e.target.value==='on'); };
+    document.getElementById('palettePeriod').onchange=e=>{ anim.palettePeriod=clamp(parseInt(e.target.value||20),5,600); };
+    document.getElementById('depthMin').onchange=e=>{ anim.depthMin=clamp(parseInt(e.target.value||4),1,10); };
+    document.getElementById('depthMax').onchange=e=>{ anim.depthMax=clamp(parseInt(e.target.value||7),1,10); };
+    syncPair('depthSpeed','depthSpeedNum',anim,'depthSpeed', v=>clamp(+v,0,5));
+    document.getElementById('fillMin').onchange=e=>{ anim.fillMin=clamp(+e.target.value,0,1); };
+    document.getElementById('fillMax').onchange=e=>{ anim.fillMax=clamp(+e.target.value,0,1); };
+    syncPair('fillSpeed','fillSpeedNum',anim,'fillSpeed', v=>clamp(+v,0,5));
+
+    // Export
+    document.getElementById('btnExportPNG').onclick=exportPNG;
+    document.getElementById('btnExportSVG').onclick=exportSVG;
+
+    document.getElementById('btnExportGIF').onclick=()=>startCapture('gif');
+    document.getElementById('btnExportMP4').onclick=()=>startCapture('mp4');
+
+    // Shortcuts
+    document.addEventListener('keydown',(e)=>{
+      if (e.key==='r' || e.key==='R') render();
+      if (e.key==='n' || e.key==='N') document.getElementById('btnNewSeed').click();
+      if (e.key==='s' || e.key==='S') exportPNG();
+    });
+
+    // Collapsible sections in Render tab
+    initCollapsibles('tab-render');
+  }
+
+  function initCollapsibles(rootId){
+    const root=document.getElementById(rootId); if (!root) return;
+    root.querySelectorAll('.section').forEach(sec=>{
+      const title=sec.querySelector(':scope > .section-title');
+      const body = sec.querySelector(':scope > .section-body');
+      if (!title || !body) return;
+      title.addEventListener('click',()=>{ sec.classList.toggle('collapsed'); });
+    });
+  }
+
+  function updateExportSize(){
+    document.getElementById('exportSize').textContent = `Size: ${width} × ${height}`;
+  }
+
+  function toggleExportUI(disabled){
+    const ids=['btnExportPNG','btnExportSVG','btnExportGIF','btnExportMP4','btnRender','animPlay','fps','fpsNum'];
+    ids.forEach(id=>{ const el=document.getElementById(id); if (el){ el.disabled=!!disabled; } });
+  }
+
+  function linkSliderVal(sliderId,labelId, onChange){
+    const s=document.getElementById(sliderId), lab=document.getElementById(labelId);
+    s.addEventListener('input',e=>{ lab.textContent=e.target.value; onChange(e.target.value); });
+  }
+  function syncPair(sliderId, inputId, obj, key, clampFn=(v)=>v){
+    const s=document.getElementById(sliderId), n=document.getElementById(inputId);
+    const apply=v=>{ obj[key]=clampFn(v); s.value=obj[key]; n.value=obj[key]; render(); };
+    s.addEventListener('input',e=>apply(parseFloat(e.target.value)));
+    n.addEventListener('change',e=>apply(parseFloat(e.target.value)));
+  }
+
+  function buildShapesMatrix(){
+    const matrix=document.getElementById('shapesMatrix');
+    matrix.innerHTML='';
+    const shapes = SHAPES.filter(s=>s.id!=='custom').slice(0,12);
+    shapes.forEach(s=>{
+      const ch=document.createElement('div'); ch.className='mixer-channel';
+      if (!params.shapeEnabled[s.id]) ch.classList.add('disabled');
+      if (shapeRepl[s.id]) ch.classList.add('replaced');
+
+      const icon=document.createElement('div'); icon.className='mixer-icon'; icon.innerHTML=shapeIconSVG(s.id);
+
+      // Per-shape SVG button and hidden input
+      const svgBtn=document.createElement('button'); svgBtn.type='button'; svgBtn.className='svg-btn' + (shapeRepl[s.id]?' active':''); svgBtn.textContent='SVG';
+      const fileInput=document.createElement('input'); fileInput.type='file'; fileInput.accept='.svg'; fileInput.style.display='none';
+      svgBtn.addEventListener('click', (e)=>{
+        e.stopPropagation();
+        // If disabled, first enable row instead of opening dialog
+        if (ch.classList.contains('disabled')){ toggleRowEnabled(); return; }
+        if (shapeRepl[s.id]){ delete shapeRepl[s.id]; svgBtn.classList.remove('active'); ch.classList.remove('replaced'); render(); }
+        else { fileInput.click(); }
+      });
+      fileInput.addEventListener('change',e=>{
+        const f=e.target.files?.[0]; if(!f) return;
+        if (f.size > 100*1024){ alert('SVG too large (max 100 KB).'); return; }
+        const r=new FileReader();
+        r.onload=ev=>{
+          const parsed=parseSVGText(ev.target.result);
+          if(parsed){ if (parsed.dList.length>200) parsed.dList = parsed.dList.slice(0,200); shapeRepl[s.id]=parsed; svgBtn.classList.add('active'); ch.classList.add('replaced'); render(); }
+          else alert('SVG parse failed (need viewBox and <path d="...">).');
+        };
+        r.readAsText(f);
+      });
+
+      const sliderWrap=document.createElement('div'); sliderWrap.className='mixer-slider';
+      const slider=document.createElement('input'); slider.type='range'; slider.min='0'; slider.max='1'; slider.step='0.01'; slider.value=(params.shapeWeights[s.id]||0).toFixed(2);
+      const val=document.createElement('div'); val.className='mixer-val'; val.textContent=(params.shapeWeights[s.id]||0).toFixed(2);
+      slider.addEventListener('click', e=>e.stopPropagation());
+      slider.addEventListener('mousedown', e=>e.stopPropagation());
+      slider.addEventListener('touchstart', e=>e.stopPropagation(), {passive:true});
+      slider.addEventListener('input',()=>{ params.shapeWeights[s.id]=+slider.value; val.textContent=Number(slider.value).toFixed(2); render(); });
+      sliderWrap.appendChild(slider);
+      slider.disabled = !params.shapeEnabled[s.id];
+
+      // Row click toggles enable/disable
+      function toggleRowEnabled(){
+        params.shapeEnabled[s.id] = !params.shapeEnabled[s.id];
+        const en = params.shapeEnabled[s.id];
+        ch.classList.toggle('disabled', !en);
+        slider.disabled = !en;
+        render();
+      }
+      ch.addEventListener('click', toggleRowEnabled);
+
+      ch.appendChild(icon);
+      ch.appendChild(sliderWrap);
+      ch.appendChild(val);
+      ch.appendChild(svgBtn);
+      ch.appendChild(fileInput);
+      matrix.appendChild(ch);
+    });
+
+    // Removed legacy global SVG upload/clear buttons; per-shape SVG controls exist on each channel.
+  }
+
+  function shapeIconSVG(id){
+    const stroke='#000', fill='#000';
+    switch(id){
+      case 'rect':    return `<svg viewBox="0 0 18 18"><rect x="3" y="4" width="12" height="10" fill="${fill}"/></svg>`;
+      case 'diamond': return `<svg viewBox="0 0 18 18"><polygon points="9,3 15,9 9,15 3,9" fill="${fill}"/></svg>`;
+      case 'triangle':return `<svg viewBox="0 0 18 18"><polygon points="9,3 15,15 3,15" fill="${fill}"/></svg>`;
+      case 'circle':  return `<svg viewBox="0 0 18 18"><circle cx="9" cy="9" r="6" fill="${fill}"/></svg>`;
+      case 'oval':    return `<svg viewBox="0 0 18 18"><ellipse cx="9" cy="9" rx="6" ry="4" fill="${fill}"/></svg>`;
+      case 'ring':    return `<svg viewBox="0 0 18 18"><circle cx="9" cy="9" r="6" fill="none" stroke="${stroke}" stroke-width="2"/></svg>`;
+      case 'line':    return `<svg viewBox="0 0 18 18"><line x1="3" y1="9" x2="15" y2="9" stroke="${stroke}" stroke-width="2"/></svg>`;
+      case 'plus':    return `<svg viewBox="0 0 18 18"><rect x="3" y="8" width="12" height="2" fill="${fill}"/><rect x="8" y="3" width="2" height="12" fill="${fill}"/></svg>`;
+      case 'cross':   return `<svg viewBox="0 0 18 18"><g transform="rotate(45 9 9)"><rect x="3" y="8" width="12" height="2" fill="${fill}"/><rect x="8" y="3" width="2" height="12" fill="${fill}"/></g></svg>`;
+      case 'pent':    return regularPolyIcon(5);
+      case 'hex':     return regularPolyIcon(6);
+      case 'oct':     return regularPolyIcon(8);
+      default:        return `<svg viewBox="0 0 18 18"><path d="M4 9 L7 4 L11 6 L14 3 L13 13 L5 15 Z" fill="${fill}"/></svg>`;
+    }
+    function regularPolyIcon(n){
+      const r=6, cx=9, cy=9; let pts=[];
+      for(let i=0;i<n;i++){ const a=-Math.PI/2+i*(2*Math.PI/n); pts.push(`${cx+r*Math.cos(a)},${cy+r*Math.sin(a)}`); }
+      return `<svg viewBox="0 0 18 18"><polygon points="${pts.join(' ')}" fill="${fill}"/></svg>`;
+    }
+  }
+
+  /* ============== Palette UI (missing before) ============== */
+  function loadPalettes(){
+    const sel = document.getElementById('palette');
+    sel.innerHTML = '';
+    PALETTES.forEach((p,i)=>{
+      const opt=document.createElement('option');
+      opt.value=String(i); opt.textContent=`Palette ${i+1}`;
+      sel.appendChild(opt);
+    });
+    sel.value = String(paletteIndex);
+    sel.onchange = e => { paletteIndex = parseInt(e.target.value||0); render(); };
+  }
+
+  /* ============== Frame-based GIF/MP4/WebM export ============== */
+  function startCapture(kind){
+    if (capture.active) return;
+    const frames = clamp(parseInt(document.getElementById('vidFrames').value||360), 300, 600);
+    const fps    = clamp(parseInt(document.getElementById('vidFps').value||24), 1, 60);
+
+    capture.active = true;
+    capture.type   = kind;
+    capture.frames = frames;
+    capture.fps    = fps;
+    capture.chunks = [];
+    capture.total  = frames;
+    capture.startTime = performance.now();
+
+    // Pause live playback during export to reduce GPU load; capture drives draw()
+    capture.restorePlay = anim.play;
+    capture.restoreFps  = anim.fps;
+    anim.play = false; anim.fps = fps; loop();
+
+    // UI: disable export controls and show status
+    if (!window.__exportStatusEl) window.__exportStatusEl = document.getElementById('exportStatus');
+    toggleExportUI(true);
+    if (window.__exportStatusEl){ window.__exportStatusEl.textContent = `Preparing ${kind.toUpperCase()}… 0/${frames} frames`; }
+
+    if (kind==='gif'){
+      capture.gif = new GIF({
+        workers:2, quality:10, width: width, height: height,
+        workerScript: 'https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js'
+      });
+      capture.gif.on('finished', blob=>{
+        const url = URL.createObjectURL(blob);
+        dl(url, `fractal_${width}x${height}_${fps}fps_${frames}f.gif`);
+        URL.revokeObjectURL(url);
+        if (window.__exportStatusEl){ window.__exportStatusEl.textContent = `GIF saved (${frames} frames)`; }
+      });
+    } else {
+      // Try MP4, fallback to WebM (browser dependent)
+      const canvas = document.querySelector('canvas');
+      const typeMP4 = 'video/mp4;codecs="avc1.42E01E, mp4a.40.2"';
+      const supportsMp4 = window.MediaRecorder && MediaRecorder.isTypeSupported && (MediaRecorder.isTypeSupported(typeMP4) || MediaRecorder.isTypeSupported('video/mp4'));
+      const mime = supportsMp4 ? (MediaRecorder.isTypeSupported(typeMP4) ? typeMP4 : 'video/mp4') : 'video/webm;codecs=vp9,opus';
+      const stream = canvas.captureStream(fps);
+      capture.mediaRecorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 8_000_000 });
+      capture.mediaRecorder.ondataavailable = e=>{ if (e.data && e.data.size>0) capture.chunks.push(e.data); };
+      capture.mediaRecorder.onstop = ()=>{
+        const blob = new Blob(capture.chunks, { type: mime });
+        const ext = mime.includes('mp4') ? 'mp4' : 'webm';
+        const url = URL.createObjectURL(blob);
+        dl(url, `fractal_${width}x${height}_${fps}fps_${frames}f.${ext}`);
+        URL.revokeObjectURL(url);
+        if (window.__exportStatusEl){ window.__exportStatusEl.textContent = `${ext.toUpperCase()} saved (${frames} frames)`; }
+      };
+      capture.mediaRecorder.start();
+    }
+  }
+
+  function finishCapture(){
+    if (!capture.active) return;
+    if (capture.type==='gif' && capture.gif){
+      if (!window.__exportStatusEl) window.__exportStatusEl = document.getElementById('exportStatus');
+      if (window.__exportStatusEl){ window.__exportStatusEl.textContent = 'Encoding GIF…'; }
+      capture.gif.render(); // async finalize
+      capture.gif = null;
+    }
+    if (capture.mediaRecorder){
+      if (!window.__exportStatusEl) window.__exportStatusEl = document.getElementById('exportStatus');
+      if (window.__exportStatusEl){ window.__exportStatusEl.textContent = 'Finalizing video…'; }
+      try { capture.mediaRecorder.stop(); } catch(_) {}
+      capture.mediaRecorder = null;
+    }
+    // restore animation state
+    anim.play = capture.restorePlay;
+    anim.fps  = capture.restoreFps;
+    if (!anim.play) noLoop();
+    capture.active=false; capture.type=null; capture.frames=0;
+    toggleExportUI(false);
+  }
+
+  /* ============== Parsing helper ============== */
+  function parseSVGText(txt){
+    let vb={minX:0,minY:0,width:100,height:100};
+    const vbMatch=txt.match(/viewBox\s*=\s*["']\s*([-\d\.eE]+)\s+([-\d\.eE]+)\s+([-\d\.eE]+)\s+([-\d\.eE]+)\s*["']/i);
+    if(vbMatch){ vb={minX:parseFloat(vbMatch[1]),minY:parseFloat(vbMatch[2]),width:parseFloat(vbMatch[3]),height:parseFloat(vbMatch[4])};
+    } else {
+      const wMatch=txt.match(/width\s*=\s*["']\s*([-\d\.eE]+)\s*/i);
+      const hMatch=txt.match(/height\s*=\s*["']\s*([-\d\.eE]+)\s*/i);
+      const w=wMatch?parseFloat(wMatch[1]):100, h=hMatch?parseFloat(hMatch[1]):100;
+      vb={minX:0,minY:0,width:w,height:h};
+    }
+    const dList=Array.from(txt.matchAll(/<path[^>]*\sd\s*=\s*["']([^"']+)["'][^>]*>/gi)).map(m=>m[1]);
+    if(dList.length===0) return null;
+    return {viewBox:vb,dList};
+  }
+  </script>
+</body>
+</html>
