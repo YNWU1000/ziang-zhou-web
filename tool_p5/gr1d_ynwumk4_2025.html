@@ -6,17 +6,12 @@
   <meta charset="UTF-8">
   <title>GR1D - Ziang Zhou</title>
 
-  <!-- =============================================== -->
-  <!-- EXTERNAL LIBRARIES -->
-  <!-- =============================================== -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
-  <script src="https://unpkg.com/p5.js-svg@1.0.1/lib/p5.svg.js"></script>
+  <!-- libs -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+<script src="https://unpkg.com/p5.js-svg@1.5.1/lib/p5.svg.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-  
+
   <style>
-    /* =============================================== */
-    /* BASE STYLES */
-    /* =============================================== */
     html, body {
       margin: 0;
       padding: 0;
@@ -26,7 +21,6 @@
       background: #ebebeb;
       color: #646464;
     }
-
     canvas {
       display: block;
       position: absolute;
@@ -36,10 +30,6 @@
       z-index: 1;
       background: white;
     }
-
-    /* =============================================== */
-    /* CONTROL PANEL LAYOUT */
-    /* =============================================== */
     #control-panel {
       display: flex;
       flex-direction: column;
@@ -54,320 +44,84 @@
       z-index: 10;
       overflow-y: auto;
     }
-
-    .section {
-      margin-bottom: 40px;
-    }
-
+    .section { margin-bottom: 40px; }
     .section-title {
-      font-size: 12px;
-      color: #000;
-      font-weight: 600;
-      margin-bottom: 20px;
-      letter-spacing: 0.5px;
+      font-size: 12px; color: #000; font-weight: 600; margin-bottom: 20px; letter-spacing: 0.5px;
     }
-
-    /* =============================================== */
-    /* PARAMETER CONTROLS */
-    /* =============================================== */
-    .param-group {
-      margin-bottom: 8px;
-    }
-
+    .param-group { margin-bottom: 8px; }
     .param-label {
-      font-size: 10px;
-      color: #646464;
-      margin-bottom: 5px;
-      display: block;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      font-size: 10px; color: #646464; margin-bottom: 5px; display: block;
+      text-transform: uppercase; letter-spacing: 0.5px;
     }
-
-    .param-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
+    .param-row { display: flex; align-items: center; gap: 8px; }
     .param-value {
-      min-width: 32px;
-      background: white;
-      border: 1px solid #ddd;
-      color: #000;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 10px;
-      text-align: center;
-      padding: 4px 6px;
-      font-weight: 600;
+      min-width: 32px; background: white; border: 1px solid #ddd; color: #000;
+      font-family: "JetBrains Mono", monospace; font-size: 10px; text-align: center;
+      padding: 4px 6px; font-weight: 600;
     }
-
-    /* =============================================== */
-    /* SLIDER STYLES */
-    /* =============================================== */
-    input[type="range"] {
-      flex: 1;
-      appearance: none;
-      height: 3px;
-      background: #ddd;
-      outline: none;
-      border-radius: 0;
-    }
-
-    input[type="range"]::-webkit-slider-thumb {
-      appearance: none;
-      width: 12px;
-      height: 12px;
-      background: #000;
-      cursor: pointer;
-      border-radius: 0;
-    }
-
-    input[type="range"]::-moz-range-thumb {
-      width: 12px;
-      height: 12px;
-      background: #000;
-      cursor: pointer;
-      border: none;
-      border-radius: 0;
-    }
-
-    /* =============================================== */
-    /* SELECT DROPDOWN STYLES */
-    /* =============================================== */
+    input[type="range"] { flex: 1; appearance: none; height: 3px; background: #ddd; outline: none; border-radius: 0; }
+    input[type="range"]::-webkit-slider-thumb { appearance: none; width: 12px; height: 12px; background: #000; cursor: pointer; border-radius: 0; }
+    input[type="range"]::-moz-range-thumb { width: 12px; height: 12px; background: #000; cursor: pointer; border: none; border-radius: 0; }
     select {
-      width: 100%;
-      background: white;
-      border: 1px solid #ddd;
-      color: #000;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 10px;
-      padding: 6px 8px;
-      font-weight: 600;
+      width: 100%; background: white; border: 1px solid #ddd; color: #000;
+      font-family: "JetBrains Mono", monospace; font-size: 10px; padding: 6px 8px; font-weight: 600;
       appearance: none;
       background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23646464' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-      background-position: right 8px center;
-      background-repeat: no-repeat;
-      background-size: 16px;
-      padding-right: 32px;
+      background-position: right 8px center; background-repeat: no-repeat; background-size: 16px; padding-right: 32px;
     }
-
-    /* =============================================== */
-    /* BUTTON STYLES */
-    /* =============================================== */
-    .button-group {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
+    .button-group { display: flex; flex-direction: column; gap: 2px; }
     button {
-      width: 100%;
-      padding: 8px 12px;
-      border: none;
-      background: white;
-      color: #646464;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 10px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      position: relative;
-      text-align: left;
+      width: 100%; padding: 8px 12px; border: none; background: white; color: #646464;
+      font-family: "JetBrains Mono", monospace; font-size: 10px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; transition: all 0.15s ease;
+      position: relative; text-align: left;
     }
-
-    button:hover {
-      background: #d0e1ff;
-      color: #000;
-    }
-
-    button:active {
-      background: #aacdfff0;
-      color: #000;
-    }
-
-    button.active {
-      background: #0000ff;
-      color: white;
-    }
-
-    button.active:hover {
-      background: #0000cc;
-    }
-
-    /* Button shortcuts display */
+    button:hover { background: #d0e1ff; color: #000; }
+    button:active { background: #aacdfff0; color: #000; }
+    button.active { background: #0000ff; color: white; }
+    button.active:hover { background: #0000cc; }
     button::after {
       content: attr(data-shortcut);
-      position: absolute;
-      right: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 9px;
-      opacity: 0.6;
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      font-size: 9px; opacity: 0.6;
     }
-
-    /* =============================================== */
-    /* CHECKBOX STYLES */
-    /* =============================================== */
-    .checkbox-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin: 15px 0;
-      padding: 6px 0;
-    }
-
+    .checkbox-row { display: flex; align-items: center; gap: 8px; margin: 15px 0; padding: 6px 0; }
     input[type="checkbox"] {
-      appearance: none;
-      width: 12px;
-      height: 12px;
-      border: 1px solid #ddd;
-      background: white;
-      position: relative;
-      cursor: pointer;
+      appearance: none; width: 12px; height: 12px; border: 1px solid #ddd; background: white; position: relative; cursor: pointer;
     }
-
-    input[type="checkbox"]:checked {
-      background: #000;
-      border-color: #000;
-    }
-
+    input[type="checkbox"]:checked { background: #000; border-color: #000; }
     input[type="checkbox"]:checked::after {
-      content: '✓';
-      position: absolute;
-      top: -2px;
-      left: 1px;
-      color: white;
-      font-size: 10px;
-      font-weight: bold;
+      content: '✓'; position: absolute; top: -2px; left: 1px; color: white; font-size: 10px; font-weight: bold;
     }
-
-    .checkbox-label {
-      font-size: 10px;
-      color: #646464;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      cursor: pointer;
-    }
-
-    /* =============================================== */
-    /* SPECIAL BUTTONS & PRESETS */
-    /* =============================================== */
-    .special-button {
-      background: #000 !important;
-      color: white !important;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .special-button:hover {
-      background: #333 !important;
-    }
-
-    #clear {
-      margin-top: 4px;
-      margin-bottom: 10px;
-    }
-
-    .param-group.preset-group {
-      margin-top: 20px;
-      margin-bottom: 5px;
-    }
-
-    .preset-buttons {
-      display: flex;
-      gap: 6px;
-    }
-
+    .checkbox-label { font-size: 10px; color: #646464; text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; }
+    .special-button { background: #000 !important; color: white !important; text-align: center; position: relative; overflow: hidden; }
+    .special-button:hover { background: #333 !important; }
+    #clear { margin-top: 4px; margin-bottom: 10px; }
+    .param-group.preset-group { margin-top: 20px; margin-bottom: 5px; }
+    .preset-buttons { display: flex; gap: 6px; }
     .preset-btn {
-      flex: 1;
-      font-size: 10px;
-      padding: 4px 0;
-      font-family: "JetBrains Mono", monospace;
-      background: white;
-      text-align: center;
-      color: #646464;
-      border: 1px solid #ddd;
-      cursor: pointer;
-      transition: all 0.05s ease;
+      flex: 1; font-size: 10px; padding: 4px 0; font-family: "JetBrains Mono", monospace;
+      background: white; text-align: center; color: #646464; border: 1px solid #ddd; cursor: pointer; transition: all 0.05s ease;
     }
-
-    .preset-btn:hover {
-      background: #b9b9b9;
-      color: #000;
-    }
-
-    .preset-btn.active {
-      background: #000;
-      color: white;
-      border-color: #000;
-    }
-
-    /* =============================================== */
-    /* SHAPE SELECTOR */
-    /* =============================================== */
-    .shape-buttons {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 15px;
-    }
-
+    .preset-btn:hover { background: #b9b9b9; color: #000; }
+    .preset-btn.active { background: #000; color: white; border-color: #000; }
+    .shape-buttons { display: flex; gap: 6px; margin-bottom: 15px; }
     .shape-btn {
-      flex: 1;
-      font-size: 10px;
-      padding: 8px 0;
-      font-family: "JetBrains Mono", monospace;
-      background: white;
-      text-align: center;
-      color: #646464;
-      border: 1px solid #ddd;
-      cursor: pointer;
-      transition: all 0.05s ease;
+      flex: 1; font-size: 10px; padding: 8px 0; font-family: "JetBrains Mono", monospace;
+      background: white; text-align: center; color: #646464; border: 1px solid #ddd; cursor: pointer; transition: all 0.05s ease;
     }
-
-    .shape-btn:hover {
-      background: #d0e1ff;
-      color: #000;
-    }
-
-    .shape-btn.active {
-      background: #0000ff;
-      color: white;
-      border-color: #0000ff;
-    }
-
-    /* =============================================== */
-    /* FOOTER CREDIT */
-    /* =============================================== */
-    .credit {
-      font-family: "Inter", sans-serif; 
-      margin-top: 20px;
-      bottom: 20px;
-      left: 0;
-      right: 0;
-      font-size: 11px;
-      color: #888888;
-      text-align: right;
-      width: 100%;
-    }
+    .shape-btn:hover { background: #d0e1ff; color: #000; }
+    .shape-btn.active { background: #0000ff; color: white; border-color: #0000ff; }
+    .credit { font-family: "Inter", sans-serif; margin-top: 20px; font-size: 11px; color: #888888; text-align: right; width: 100%; }
   </style>
 </head>
 <body>
-
-  <!-- =============================================== -->
-  <!-- CONTROL PANEL HTML -->
-  <!-- =============================================== -->
   <div id="control-panel">
-
-    <!-- FUNCTION BUTTONS SECTION -->
     <div class="section">
       <div class="section-title">FUNC</div>
-      
       <div class="button-group">
         <button id="undo" data-shortcut="Z">UNDO</button>
-        <button id="clear" style="margin-bottom: 10px;" data-shortcut="X">CLEAR</button>
+        <button id="clear" data-shortcut="X">CLEAR</button>
         <button id="toggleWarp" data-shortcut="W">WARP</button>
         <button id="toggleColor" data-shortcut="C">COLOR</button>
         <button id="toggleOutline" data-shortcut="O">OUTLINE</button>
@@ -375,10 +129,8 @@
       </div>
     </div>
 
-    <!-- BRUSH SECTION -->
     <div class="section">
       <div class="section-title">BRUSH</div>
-      
       <div class="param-group">
         <label class="param-label">Shape</label>
         <div class="shape-buttons">
@@ -386,18 +138,15 @@
           <button class="shape-btn" data-shape="square">■</button>
         </div>
       </div>
-      
-      <div class="checkbox-row" id="square-connector-row" style="display: none;">
+      <div class="checkbox-row" id="square-connector-row" style="display:none;">
         <input type="checkbox" id="corner-connect" />
         <label class="checkbox-label" for="corner-connect">UNISON LINE WEIGHT</label>
       </div>
     </div>
 
-    <!-- GRID PARAMETERS SECTION -->
     <div class="section">
       <div class="section-title">GRID</div>
-      
-      <div class="param-group">
+<div class="param-group">
         <label class="param-label">Radius</label>
         <div class="param-row">
           <input type="range" id="radius" min="4" max="100" value="56">
@@ -437,7 +186,6 @@
         </div>
       </div>
 
-      <!-- GRID PRESETS -->
       <div class="param-group preset-group">
         <label class="param-label">PRESET</label>
         <div class="preset-buttons">
@@ -450,10 +198,8 @@
       </div>
     </div>
 
-    <!-- EXPORT SECTION -->
     <div class="section">
       <div class="section-title">EXPORT</div>
-      
       <div class="param-group">
         <label class="param-label">Size</label>
         <select id="export-size">
@@ -462,29 +208,28 @@
           <option value="32">32×32</option>
           <option value="48">48×48</option>
           <option value="64">64×64</option>
+          <option value="128">128×128</option>
+          <option value="256">256×256</option>
+          <option value="512">512×512</option>
         </select>
       </div>
-
       <div class="checkbox-row">
         <input type="checkbox" id="mode-toggle" />
         <label class="checkbox-label" for="mode-toggle">Export as lines</label>
       </div>
-
       <div class="button-group">
-        <button id="download-svg" class="special-button" data-shortcut="D">Download SVG</button>
+        <button id="export-png" class="special-button" data-shortcut="P">Export PNG</button>
+        <button id="export-svg" class="special-button" data-shortcut="V">Export SVG</button>
       </div>
     </div>
 
-    <!-- EXPERIMENTAL SECTION -->
     <div class="section">
       <div class="section-title">EXPERIMENTAL</div>
-      
       <div class="button-group">
-        <button id="surprise" data-shortcut="S">SURPISE ME</button>
+        <button id="surprise" data-shortcut="S">SURPRISE ME</button>
         <button id="toggleGameOfLife" data-shortcut="L">GAME OF LIFE</button>
       </div>
-      
-      <div id="game-of-life-controls" style="display: none; margin-top: 10px;">
+      <div id="game-of-life-controls" style="display:none; margin-top:10px;">
         <div class="param-group">
           <label class="param-label">Speed</label>
           <div class="param-row">
@@ -492,64 +237,56 @@
             <div class="param-value" id="gol-speed-val">10</div>
           </div>
         </div>
-        
-        <div class="button-group" style="margin-top: 10px;">
-          <button id="gol-play" style="background: #4CAF50; color: white;">PLAY</button>
+        <div class="button-group" style="margin-top:10px;">
+          <button id="gol-play" style="background:#4CAF50; color:white;">PLAY</button>
           <button id="gol-step">STEP</button>
           <button id="gol-clear">CLEAR CELLS</button>
         </div>
       </div>
     </div>
-    
-    <!-- FOOTER CREDIT -->
+
     <div class="credit">৻( •̀ ᗜ •́ ৻) ✧</div>
   </div>
 
   <script>
-    // ===============================================
-    // GLOBAL VARIABLES
-    // ===============================================
-    
-    // Grid configuration
-    let cols = 6;
-    let rows = 6;
-    let radius = 24;
-    let spacing = 60;
-    let margin = 50;
-
-    // Drawing data
+    // ---------------------------
+    // Globals
+    // ---------------------------
+    let cols = 6, rows = 6, radius = 24, spacing = 60, margin = 50;
     let grid = [];
     let strokes = [];
     let strokeColors = [];
-    let strokeShapes = []; // New array to store shape for each stroke
+    let strokeShapes = []; // per-stroke shape
     let currentStroke = [];
+    let undoStack = [];
 
-    // Flags
     let useColors = false;
     let outlineOnly = false;
     let showGrid = true;
-    let warpMode = false;
-    let brushShape = 'circle'; // 'circle' or 'square'
-    let squareConnectorMode = 'center'; // 'center' or 'corner' (only for square)
+    let brushShape = 'circle';
+    let squareConnectorMode = 'corner'; // 'corner' | 'center'
 
-    // Undo stack
-    let undoStack = [];
+    // Warp
+    let warpMode = false;
+    let warpStartPoint = null;
 
     // Game of Life
     let gameOfLifeMode = false;
-    let gameOfLifeGrid = [];
     let gameOfLifeRunning = false;
-    let gameOfLifeSpeed = 10; // frames between updates
+    let gameOfLifeGrid = [];
+    let gameOfLifeSpeed = 10;
+    let frameCounter = 0;
 
-    // ===============================================
-    // P5 SETUP & DRAW
-    // ===============================================
-    
+    // ---------------------------
+    // Setup / Draw
+    // ---------------------------
     function setup() {
-      createCanvas(window.innerWidth - 240, window.innerHeight);
-      pixelDensity(2);
-      rebuildGrid();
-      initUI();
+      const canvas = createCanvas(window.innerWidth - 240, window.innerHeight);
+      canvas.parent(document.body);
+      canvas.style('z-index', '1');
+      updateValues(); // will rebuild grid
+      setupParamUpdates();
+      setupShapeButtons();
     }
 
     function windowResized() {
@@ -557,98 +294,95 @@
     }
 
     function draw() {
-      background(255);
-      
-      // Grid
-      if (showGrid) {
-        stroke(220);
-        noFill();
-        for (let i = 0; i < cols; i++) {
-          for (let j = 0; j < rows; j++) {
-            let p = grid[i][j];
-            if (brushShape === 'square') rectMode(CENTER);
-            if (brushShape === 'square') {
-              rect(p.x, p.y, radius * 2, radius * 2);
-            } else {
-              ellipse(p.x, p.y, radius * 2);
-            }
+      background(250);
+
+      if (showGrid && !gameOfLifeMode) {
+        stroke(200); strokeWeight(1); noFill();
+        for (let i=0;i<cols;i++) for (let j=0;j<rows;j++) {
+          if (brushShape === 'square') {
+            rectMode(CENTER);
+            rect(grid[i][j].x, grid[i][j].y, radius*2, radius*2);
+          } else {
+            ellipse(grid[i][j].x, grid[i][j].y, radius*2);
           }
         }
       }
 
-      // Draw strokes
-      for (let i = 0; i < strokes.length; i++) {
-        const col = useColors ? strokeColors[i] : color(0);
-        drawStroke(strokes[i], col, outlineOnly, strokeShapes[i] || 'circle');
-      }
-      
-      // Preview current stroke
-      drawStroke(currentStroke, color(0), false, brushShape);
-
-      // Game of Life update
-      if (gameOfLifeMode && gameOfLifeRunning && frameCount % gameOfLifeSpeed === 0) {
-        updateGameOfLife();
-      }
-    }
-
-    // ===============================================
-    // DRAW HELPERS
-    // ===============================================
-    
-    function drawStroke(strokePath, col, isOutline, shape) {
-      if (!strokePath || strokePath.length === 0) return;
-      
-      if (isOutline) {
-        stroke(col);
-        noFill();
-      } else {
-        fill(col);
+      if (gameOfLifeMode) {
+        stroke(200); strokeWeight(1); noFill();
+        for (let i=0;i<cols;i++) for (let j=0;j<rows;j++) {
+          rectMode(CENTER);
+          rect(grid[i][j].x, grid[i][j].y, radius*2, radius*2);
+        }
+        fill(useColors ? color(random(30,220), random(30,220), random(30,220)) : 0);
         noStroke();
-      }
-      
-      for (let i = 0; i < strokePath.length; i++) {
-        let p = strokePath[i];
-        drawBrush(p, radius, shape);
-        if (i > 0) drawConnector(strokePath[i - 1], strokePath[i], radius, shape);
-      }
-    }
-
-    function drawBrush(pos, r, shape) {
-      push();
-      translate(pos.x, pos.y);
-      if (shape === 'square') {
-        rectMode(CENTER);
-        if (outlineOnly) {
-          rect(0, 0, r * 2, r * 2);
-        } else {
-          rect(0, 0, r * 2, r * 2);
+        for (let i=0;i<cols;i++) for (let j=0;j<rows;j++) {
+          if (gameOfLifeGrid[i] && gameOfLifeGrid[i][j]) {
+            rectMode(CENTER);
+            rect(grid[i][j].x, grid[i][j].y, radius*2, radius*2);
+          }
+        }
+        if (gameOfLifeRunning) {
+          frameCounter++;
+          if (frameCounter >= gameOfLifeSpeed) {
+            updateGameOfLife();
+            frameCounter = 0;
+          }
         }
       } else {
-        ellipse(0, 0, r * 2);
+        if (warpMode && warpStartPoint) {
+          fill(0,0,255,100); noStroke();
+          ellipse(warpStartPoint.x, warpStartPoint.y, radius*2.5);
+        }
+        // Strokes
+        for (let i=0;i<strokes.length;i++) {
+          drawStrokeOn(window, strokes[i], useColors ? strokeColors[i] : color(0), strokeShapes[i] || 'circle', radius);
+        }
+        // Current
+        drawStrokeOn(window, currentStroke, color(100,100,100,150), brushShape, radius);
       }
-      pop();
     }
 
-    function drawCapsule(a, b, r) {
-      let dir = p5.Vector.sub(b, a).normalize();
-      let perp = createVector(-dir.y, dir.x).mult(r);
-      let a1 = p5.Vector.add(a, perp);
-      let a2 = p5.Vector.sub(a, perp);
-      let b1 = p5.Vector.add(b, perp);
-      let b2 = p5.Vector.sub(b, perp);
-      beginShape();
-      vertex(a1.x, a1.y); vertex(b1.x, b1.y);
-      vertex(b2.x, b2.y); vertex(a2.x, a2.y);
-      endShape(CLOSE);
+    // ---------------------------
+    // Drawing Helpers (allow drawing on any p5 graphics context)
+    // ---------------------------
+    function drawStrokeOn(gfx, strokePath, col, shape, r) {
+      if (!strokePath || strokePath.length === 0) return;
+      if (outlineOnly) { gfx.stroke(col); gfx.strokeWeight(1); gfx.noFill(); }
+      else { gfx.fill(col); gfx.noStroke(); }
+      for (let i=0;i<strokePath.length;i++) {
+        const p = strokePath[i];
+        drawShapeOn(gfx, p.x, p.y, r, shape);
+        if (i>0) {
+          if (shape === 'circle') drawCapsuleOn(gfx, strokePath[i-1], strokePath[i], r);
+          else drawConnectorOn(gfx, strokePath[i-1], strokePath[i], r, shape);
+        }
+      }
     }
-
-    function drawConnector(a, b, r, shape) {
+    function drawShapeOn(gfx, x,y,r, shape) {
+      gfx.push(); gfx.translate(x,y);
+      if (shape === 'square') { gfx.rectMode(CENTER); gfx.rect(0,0,r*2,r*2); }
+      else { gfx.ellipse(0,0,r*2); }
+      gfx.pop();
+    }
+    function drawCapsuleOn(gfx, a,b,r) {
+      const dir = p5.Vector.sub(b,a).normalize();
+      const perp = createVector(-dir.y, dir.x).mult(r);
+      const a1 = p5.Vector.add(a, perp);
+      const a2 = p5.Vector.sub(a, perp);
+      const b1 = p5.Vector.add(b, perp);
+      const b2 = p5.Vector.sub(b, perp);
+      gfx.beginShape();
+      gfx.vertex(a1.x,a1.y); gfx.vertex(b1.x,b1.y);
+      gfx.vertex(b2.x,b2.y); gfx.vertex(a2.x,a2.y);
+      gfx.endShape(CLOSE);
+    }
+    function drawConnectorOn(gfx, a,b,r,shape) {
       if (shape === 'square' && squareConnectorMode === 'corner') {
-        // Corner-based connectors for squares
-        let dir = p5.Vector.sub(b, a);
+        const dx=b.x-a.x, dy=b.y-a.y;
         let aCorner1, aCorner2, bCorner1, bCorner2;
-        if (abs(dir.x) > abs(dir.y)) {
-          if (dir.x > 0) {
+        if (Math.abs(dx) > Math.abs(dy)) {
+          if (dx>0) {
             aCorner1 = createVector(a.x + r, a.y - r);
             aCorner2 = createVector(a.x + r, a.y + r);
             bCorner1 = createVector(b.x - r, b.y - r);
@@ -660,7 +394,7 @@
             bCorner2 = createVector(b.x + r, b.y + r);
           }
         } else {
-          if (dir.y > 0) {
+          if (dy>0) {
             aCorner1 = createVector(a.x - r, a.y + r);
             aCorner2 = createVector(a.x + r, a.y + r);
             bCorner1 = createVector(b.x - r, b.y - r);
@@ -672,460 +406,368 @@
             bCorner2 = createVector(b.x + r, b.y + r);
           }
         }
-        beginShape();
-        vertex(aCorner1.x, aCorner1.y);
-        vertex(bCorner1.x, bCorner1.y);
-        vertex(bCorner2.x, bCorner2.y);
-        vertex(aCorner2.x, aCorner2.y);
-        endShape(CLOSE);
+        if (Math.abs(dx)>0 && Math.abs(dy)>0 && Math.abs(Math.abs(dx)-Math.abs(dy))<10) {
+          if (dx>0 && dy>0) {
+            aCorner1 = createVector(a.x + r, a.y - r);
+            aCorner2 = createVector(a.x - r, a.y + r);
+            bCorner1 = createVector(b.x + r, b.y - r);
+            bCorner2 = createVector(b.x - r, b.y + r);
+          } else if (dx>0 && dy<0) {
+            aCorner1 = createVector(a.x - r, a.y - r);
+            aCorner2 = createVector(a.x + r, a.y + r);
+            bCorner1 = createVector(b.x - r, b.y - r);
+            bCorner2 = createVector(b.x + r, b.y + r);
+          } else if (dx<0 && dy>0) {
+            aCorner1 = createVector(a.x + r, a.y + r);
+            aCorner2 = createVector(a.x - r, a.y - r);
+            bCorner1 = createVector(b.x + r, b.y + r);
+            bCorner2 = createVector(b.x - r, b.y + r);
+          } else {
+            aCorner1 = createVector(a.x - r, a.y + r);
+            aCorner2 = createVector(a.x + r, a.y - r);
+            bCorner1 = createVector(b.x - r, b.y + r);
+            bCorner2 = createVector(b.x + r, b.y - r);
+          }
+        }
+        gfx.beginShape();
+        gfx.vertex(aCorner1.x, aCorner1.y); gfx.vertex(bCorner1.x, bCorner1.y);
+        gfx.vertex(bCorner2.x, bCorner2.y); gfx.vertex(aCorner2.x, aCorner2.y);
+        gfx.endShape(CLOSE);
       } else {
-        let dir = p5.Vector.sub(b, a).normalize();
-        let perp = createVector(-dir.y, dir.x).mult(r);
-        let a1 = p5.Vector.add(a, perp);
-        let a2 = p5.Vector.sub(a, perp);
-        let b1 = p5.Vector.add(b, perp);
-        let b2 = p5.Vector.sub(b, perp);
-        beginShape();
-        vertex(a1.x, a1.y);
-        vertex(b1.x, b1.y);
-        vertex(b2.x, b2.y);
-        vertex(a2.x, a2.y);
-        endShape(CLOSE);
+        const dir = p5.Vector.sub(b,a).normalize();
+        const perp = createVector(-dir.y, dir.x).mult(r);
+        const a1 = p5.Vector.add(a, perp);
+        const a2 = p5.Vector.sub(a, perp);
+        const b1 = p5.Vector.add(b, perp);
+        const b2 = p5.Vector.sub(b, perp);
+        gfx.beginShape();
+        gfx.vertex(a1.x,a1.y); gfx.vertex(b1.x,b1.y);
+        gfx.vertex(b2.x,b2.y); gfx.vertex(a2.x,a2.y);
+        gfx.endShape(CLOSE);
       }
     }
 
-    // ===============================================
-    // GRID MANAGEMENT
-    // ===============================================
-    
+    // ---------------------------
+    // Grid
+    // ---------------------------
     function rebuildGrid() {
       grid = [];
-      for (let i = 0; i < cols; i++) {
+      for (let i=0;i<cols;i++) {
         grid[i] = [];
-        for (let j = 0; j < rows; j++) {
-          grid[i][j] = createVector(margin + i * spacing, margin + j * spacing);
+        for (let j=0;j<rows;j++) {
+          grid[i][j] = createVector(margin + i*spacing, margin + j*spacing);
         }
       }
     }
 
+    // FIX: remap strokes by grid index (prevents drift when spacing/margin change)
     function updateValues() {
-      let oldSpacing = spacing;
-      let oldMargin = margin;
-
+      const oldCols = cols, oldRows = rows, oldSpacing = spacing, oldMargin = margin;
+      // Snapshot "old grid" (only logical; we don't need to store coords explicitly)
+      // Read new values
       radius = parseInt(document.getElementById("radius").value);
       spacing = parseInt(document.getElementById("spacing").value);
-      margin = parseInt(document.getElementById("margin").value);
-      cols = parseInt(document.getElementById("cols").value);
-      rows = parseInt(document.getElementById("rows").value);
+      margin  = parseInt(document.getElementById("margin").value);
+      cols    = parseInt(document.getElementById("cols").value);
+      rows    = parseInt(document.getElementById("rows").value);
 
-      let ds = spacing / oldSpacing;
-      for (let stroke of strokes) {
-        for (let p of stroke) {
-          p.x = (p.x - oldMargin) * ds + margin;
-          p.y = (p.y - oldMargin) * ds + margin;
+      // Build new grid coordinates
+      const newGrid = [];
+      for (let i=0;i<cols;i++) {
+        newGrid[i] = [];
+        for (let j=0;j<rows;j++) {
+          newGrid[i][j] = createVector(margin + i*spacing, margin + j*spacing);
         }
       }
-      for (let p of currentStroke) {
-        p.x = (p.x - oldMargin) * ds + margin;
-        p.y = (p.y - oldMargin) * ds + margin;
-      }
 
-      rebuildGrid();
+      const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+      function snapToIndex(pt, gridCols, gridRows, gMargin, gSpacing) {
+        let i = Math.round((pt.x - gMargin) / gSpacing);
+        let j = Math.round((pt.y - gMargin) / gSpacing);
+        i = clamp(i, 0, gridCols-1);
+        j = clamp(j, 0, gridRows-1);
+        return {i, j};
+      }
+      function remapStroke(strokeArr) {
+        for (let k=0;k<strokeArr.length;k++) {
+          const p = strokeArr[k];
+          const idx = snapToIndex(p, oldCols, oldRows, oldMargin, oldSpacing);
+          const ni = clamp(idx.i, 0, cols-1);
+          const nj = clamp(idx.j, 0, rows-1);
+          const np = newGrid[ni][nj];
+          p.x = np.x; p.y = np.y;
+        }
+      }
+      // Remap all stored data
+      for (const s of strokes) remapStroke(s);
+      remapStroke(currentStroke);
+      for (const entry of undoStack) { if (entry && entry.stroke) remapStroke(entry.stroke); }
+
+      // Commit grid
+      grid = newGrid;
     }
 
-    // ===============================================
-    // GAME OF LIFE FUNCTIONS
-    // ===============================================
-    
+    // ---------------------------
+    // Game of Life
+    // ---------------------------
     function initGameOfLife() {
       gameOfLifeGrid = [];
-      for (let i = 0; i < cols; i++) {
+      for (let i=0;i<cols;i++) {
         gameOfLifeGrid[i] = [];
-        for (let j = 0; j < rows; j++) {
-          gameOfLifeGrid[i][j] = false;
-        }
+        for (let j=0;j<rows;j++) gameOfLifeGrid[i][j] = false;
       }
-      for (let stroke of strokes) {
-        for (let point of stroke) {
-          let gridPos = findGridPosition(point);
+      for (const stroke of strokes) {
+        for (const point of stroke) {
+          const gridPos = findGridPosition(point);
           if (gridPos) gameOfLifeGrid[gridPos.i][gridPos.j] = true;
         }
       }
     }
-    
     function findGridPosition(point) {
-      for (let i = 0; i < cols; i++) {
-        for (let j = 0; j < rows; j++) {
-          if (dist(point.x, point.y, grid[i][j].x, grid[i][j].y) < radius) return { i, j };
-        }
+      for (let i=0;i<cols;i++) for (let j=0;j<rows;j++) {
+        if (dist(point.x, point.y, grid[i][j].x, grid[i][j].y) < radius) return {i,j};
       }
       return null;
     }
-    
     function updateGameOfLife() {
-      let newGrid = [];
-      for (let i = 0; i < cols; i++) {
+      const newGrid = [];
+      for (let i=0;i<cols;i++) {
         newGrid[i] = [];
-        for (let j = 0; j < rows; j++) {
-          let neighbors = countNeighbors(i, j);
-          let currentState = gameOfLifeGrid[i][j];
-          if (currentState && (neighbors === 2 || neighbors === 3)) newGrid[i][j] = true;
-          else if (!currentState && neighbors === 3) newGrid[i][j] = true;
+        for (let j=0;j<rows;j++) {
+          const neighbors = countNeighbors(i,j);
+          const cur = gameOfLifeGrid[i][j];
+          if (cur && (neighbors===2 || neighbors===3)) newGrid[i][j] = true;
+          else if (!cur && neighbors===3) newGrid[i][j] = true;
           else newGrid[i][j] = false;
         }
       }
       gameOfLifeGrid = newGrid;
     }
-    
-    function countNeighbors(x, y) {
-      let count = 0;
-      for (let i = -1; i <= 1; i++) {
-        for (let j = -1; j <= 1; j++) {
-          if (i === 0 && j === 0) continue;
-          let col = x + i;
-          let row = y + j;
-          if (col < 0) col = cols - 1;
-          if (col >= cols) col = 0;
-          if (row < 0) row = rows - 1;
-          if (row >= rows) row = 0;
-          if (gameOfLifeGrid[col] && gameOfLifeGrid[col][row]) count++;
-        }
+    function countNeighbors(x,y) {
+      let c=0;
+      for (let i=-1;i<=1;i++) for (let j=-1;j<=1;j++) {
+        if (i===0 && j===0) continue;
+        let col = x+i, row = y+j;
+        if (col<0) col=cols-1; if (col>=cols) col=0;
+        if (row<0) row=rows-1; if (row>=rows) row=0;
+        if (gameOfLifeGrid[col] && gameOfLifeGrid[col][row]) c++;
       }
-      return count;
+      return c;
     }
 
-    // ===============================================
-    // MOUSE INTERACTION HANDLERS
-    // ===============================================
-    
-    function mousePressed() {
-      if (gameOfLifeMode) return;
-      if (warpMode) return; // handled in mouseReleased
-      currentStroke = [];
-      let p = findClosestNode(mouseX, mouseY);
-      if (p) currentStroke.push(p.copy());
-    }
-
-    function mouseDragged() {
-      if (gameOfLifeMode || warpMode) return;
-      let point = findClosestNode(mouseX, mouseY);
-      if (point && (!currentStroke.length || !point.equals(currentStroke[currentStroke.length - 1]))) {
-        currentStroke.push(point.copy());
-      }
-    }
-
-    function mouseReleased() {
-      if (gameOfLifeMode) return;
-      if (warpMode) {
-        // Warp: connect any two clicked points
-        let p = findClosestNode(mouseX, mouseY);
-        if (!p) return;
-        if (currentStroke.length === 0) {
-          currentStroke.push(p.copy());
-        } else {
-          currentStroke.push(p.copy());
-          if (currentStroke.length >= 2) {
-            const col = useColors ? color(random(30, 255), random(30, 255), random(30, 255)) : color(0);
-            undoStack.push({ stroke: currentStroke.map(pt => pt.copy()), color: col, shape: brushShape });
-            applyUndoStack();
-            currentStroke = [];
+    // ---------------------------
+    // Mouse
+    // ---------------------------
+    window.mousePressed = function() {
+      if (mouseX < width && mouseY < height) {
+        if (gameOfLifeMode) {
+          const pos = nearestGridIndex(mouseX, mouseY);
+          if (pos) gameOfLifeGrid[pos.i][pos.j] = !gameOfLifeGrid[pos.i][pos.j];
+        } else if (warpMode) {
+          const pt = findClosestNode(mouseX, mouseY);
+          if (pt) {
+            if (!warpStartPoint) warpStartPoint = pt.copy();
+            else {
+              if (!pt.equals(warpStartPoint)) {
+                const warpStroke = [warpStartPoint.copy(), pt.copy()];
+                const col = useColors ? color(random(30,220), random(30,220), random(30,220)) : color(0);
+                undoStack.push({ stroke: warpStroke, color: col, shape: brushShape });
+                applyUndoStack();
+              }
+              warpStartPoint = null;
+            }
           }
+        } else {
+          currentStroke = [];
         }
-        return;
       }
-
-      if (currentStroke.length > 0) {
-        const col = useColors ? color(random(30, 255), random(30, 255), random(30, 255)) : color(0);
-        undoStack.push({ stroke: currentStroke.map(p => p.copy()), color: col, shape: brushShape });
+    };
+    window.mouseDragged = function() {
+      if (mouseX < width && mouseY < height) {
+        if (gameOfLifeMode) {
+          const pos = nearestGridIndex(mouseX, mouseY);
+          if (pos) gameOfLifeGrid[pos.i][pos.j] = true;
+        } else if (!warpMode) {
+          const pt = findClosestNode(mouseX, mouseY);
+          if (pt && !pointInStroke(pt, currentStroke)) currentStroke.push(pt.copy());
+        }
+      }
+    };
+    window.mouseReleased = function() {
+      if (currentStroke.length>0 && !warpMode) {
+        undoStack.push({
+          stroke: currentStroke.map(p=>p.copy()),
+          color: useColors ? color(random(30,220), random(30,220), random(30,220)) : color(0),
+          shape: brushShape
+        });
         applyUndoStack();
         currentStroke = [];
       }
-    }
-
-    function findClosestNode(x, y) {
-      for (let i = 0; i < cols; i++) {
-        for (let j = 0; j < rows; j++) {
-          let node = grid[i][j];
-          if (dist(x, y, node.x, node.y) < radius * 1.2) return node.copy();
-        }
+    };
+    function nearestGridIndex(x,y) {
+      for (let i=0;i<cols;i++) for (let j=0;j<rows;j++) {
+        const node = grid[i][j];
+        if (dist(x,y,node.x,node.y) < radius) return {i,j};
       }
       return null;
     }
-
-    // ===============================================
-    // UNDO/REDO & APPLY STACK
-    // ===============================================
-    
-    function applyUndoStack() {
-      strokes = [];
-      strokeColors = [];
-      strokeShapes = [];
-      for (let entry of undoStack) {
-        strokes.push(entry.stroke.map(p => p.copy()));
-        strokeColors.push(entry.color);
-        strokeShapes.push(entry.shape || 'circle');
+    function findClosestNode(x,y) {
+      for (let i=0;i<cols;i++) for (let j=0;j<rows;j++) {
+        const node = grid[i][j];
+        if (dist(x,y,node.x,node.y) < radius*1.2) return node.copy();
       }
+      return null;
+    }
+    function pointInStroke(p, stroke) { return stroke.some(pt => p.equals(pt)); }
+    function applyUndoStack() {
+      strokes = undoStack.map(e=>e.stroke);
+      strokeColors = undoStack.map(e=>e.color);
+      strokeShapes = undoStack.map(e=>e.shape || 'circle');
     }
 
-    // ===============================================
-    // UI SETUP
-    // ===============================================
-    
-    function initUI() {
-      // Slider displays
-      const sliders = ['radius','spacing','margin','cols','rows'];
-      sliders.forEach(id => {
-        const el = document.getElementById(id);
-        const valEl = document.getElementById(`${id}-val`);
-        el.addEventListener('input', () => {
-          valEl.textContent = el.value;
+    // ---------------------------
+    // UI events
+    // ---------------------------
+    function setupParamUpdates() {
+      const params = ['radius','spacing','margin','cols','rows'];
+      params.forEach(param => {
+        const slider = document.getElementById(param);
+        const display = document.getElementById(param + '-val');
+        slider.addEventListener('input', () => {
+          display.textContent = slider.value;
           updateValues();
         });
       });
+    }
+    function setupShapeButtons() {
+      document.querySelectorAll('.shape-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          brushShape = btn.dataset.shape;
+          document.querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const row = document.getElementById('square-connector-row');
+          row.style.display = (brushShape === 'square') ? 'flex' : 'none';
+        });
+      });
+      document.getElementById('corner-connect').addEventListener('change', (e)=>{
+        squareConnectorMode = e.target.checked ? 'corner' : 'center';
+      });
+    }
 
-      // Presets
-      const presetConfigs = {
+    const presetConfigs = {
         "3x3":   { radius: 65, spacing: 140, margin: 100, cols: 3, rows: 3 },
         "4x4":   { radius: 65, spacing: 140,  margin: 100, cols: 4, rows: 4 },
         "5x5":   { radius: 65, spacing: 140,  margin: 100, cols: 5, rows: 5 },
         "6x6":   { radius: 56, spacing: 120,  margin: 100, cols: 6, rows: 6 },
-        "10x10": { radius: 56, spacing: 120,  margin: 100, cols: 10, rows: 10 }
+        "10x10": { radius: 35, spacing: 75,  margin: 100, cols: 10, rows: 10 }
       };
-      document.querySelectorAll(".preset-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const preset = btn.dataset.preset;
-          const config = presetConfigs[preset];
-          if (!config) return;
-          document.getElementById("radius").value = config.radius;
-          document.getElementById("spacing").value = config.spacing;
-          document.getElementById("margin").value = config.margin;
-          document.getElementById("cols").value = config.cols;
-          document.getElementById("rows").value = config.rows;
-          document.getElementById("radius-val").textContent = config.radius;
-          document.getElementById("spacing-val").textContent = config.spacing;
-          document.getElementById("margin-val").textContent = config.margin;
-          document.getElementById("cols-val").textContent = config.cols;
-          document.getElementById("rows-val").textContent = config.rows;
-          updateValues();
-          document.querySelectorAll(".preset-btn").forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
-        });
+    document.querySelectorAll(".preset-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const preset = btn.dataset.preset;
+        const cfg = presetConfigs[preset]; if (!cfg) return;
+        document.getElementById("radius").value = cfg.radius;
+        document.getElementById("spacing").value = cfg.spacing;
+        document.getElementById("margin").value  = cfg.margin;
+        document.getElementById("cols").value    = cfg.cols;
+        document.getElementById("rows").value    = cfg.rows;
+        document.getElementById("radius-val").textContent  = cfg.radius;
+        document.getElementById("spacing-val").textContent = cfg.spacing;
+        document.getElementById("margin-val").textContent  = cfg.margin;
+        document.getElementById("cols-val").textContent    = cfg.cols;
+        document.getElementById("rows-val").textContent    = cfg.rows;
+        updateValues();
+        document.querySelectorAll(".preset-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
       });
+    });
 
-      // Shape buttons
-      document.querySelectorAll('.shape-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          document.querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          brushShape = btn.dataset.shape;
-          const row = document.getElementById('square-connector-row');
-          row.style.display = brushShape === 'square' ? 'flex' : 'none';
-        });
-      });
-      document.getElementById('corner-connect').addEventListener('change', (e) => {
-        squareConnectorMode = e.target.checked ? 'corner' : 'center';
-      });
+    document.getElementById("clear").addEventListener("click", () => {
+      strokes = []; strokeColors = []; strokeShapes = []; currentStroke = []; undoStack = []; warpStartPoint = null;
+    });
+    document.getElementById("toggleColor").addEventListener("click", (e) => {
+      useColors = !useColors; e.target.classList.toggle('active', useColors);
+    });
+    document.getElementById("toggleOutline").addEventListener("click", (e) => {
+      outlineOnly = !outlineOnly; e.target.classList.toggle('active', outlineOnly);
+    });
+    document.getElementById("toggleGrid").addEventListener("click", (e) => {
+      showGrid = !showGrid; e.target.classList.toggle('active', showGrid);
+    });
+    document.getElementById("toggleWarp").addEventListener("click", (e) => {
+      warpMode = !warpMode; e.target.classList.toggle('active', warpMode);
+      warpStartPoint = null; currentStroke = [];
+    });
+    document.getElementById("undo").addEventListener("click", () => {
+      if (undoStack.length>0) { undoStack.pop(); applyUndoStack(); }
+    });
 
-      // Buttons / toggles
-      document.getElementById("clear").addEventListener("click", () => {
-        strokes = [];
-        strokeColors = [];
-        strokeShapes = [];
-        currentStroke = [];
-        undoStack = [];
-      });
-
-      document.getElementById("toggleColor").addEventListener("click", (e) => {
-        useColors = !useColors;
-        e.target.classList.toggle('active', useColors);
-      });
-
-      document.getElementById("toggleOutline").addEventListener("click", (e) => {
-        outlineOnly = !outlineOnly;
-        e.target.classList.toggle('active', outlineOnly);
-      });
-
-      document.getElementById("toggleGrid").addEventListener("click", (e) => {
-        showGrid = !showGrid;
-        e.target.classList.toggle('active', showGrid);
-      });
-
-      document.getElementById("toggleWarp").addEventListener("click", (e) => {
-        warpMode = !warpMode;
-        e.target.classList.toggle('active', warpMode);
-        currentStroke = [];
-      });
-
-      document.getElementById("undo").addEventListener("click", () => {
-        if (undoStack.length > 0) {
-          undoStack.pop();
-          applyUndoStack();
-        }
-      });
-
-      document.getElementById("download-svg").addEventListener("click", () => {
-        const exportSize = parseInt(document.getElementById("export-size").value);
-        const useLines = document.getElementById("mode-toggle")?.checked ?? false;
-        const svg = buildSVG(exportSize, useLines);
-        const filename = `gr1d-${cols}x${rows}-${exportSize}.svg`;
-        downloadSVG(svg, filename);
-      });
-
-      // Game of Life
-      document.getElementById("toggleGameOfLife").addEventListener("click", (e) => {
-        gameOfLifeMode = !gameOfLifeMode;
-        e.target.classList.toggle('active', gameOfLifeMode);
-        const golControls = document.getElementById('game-of-life-controls');
-        if (gameOfLifeMode) {
-          golControls.style.display = 'block';
-          initGameOfLife();
-          warpMode = false;
-          document.getElementById('toggleWarp').classList.remove('active');
-        } else {
-          golControls.style.display = 'none';
-          gameOfLifeRunning = false;
-          document.getElementById('gol-play').textContent = 'PLAY';
-          document.getElementById('gol-play').style.background = '#4CAF50';
-        }
-      });
-      document.getElementById('gol-play').addEventListener('click', (e) => {
-        gameOfLifeRunning = !gameOfLifeRunning;
-        if (gameOfLifeRunning) {
-          e.target.textContent = 'PAUSE';
-          e.target.style.background = '#f44336';
-        } else {
-          e.target.textContent = 'PLAY';
-          e.target.style.background = '#4CAF50';
-        }
-      });
-      document.getElementById('gol-step').addEventListener('click', () => updateGameOfLife());
-      document.getElementById('gol-clear').addEventListener('click', () => {
-        for (let i = 0; i < cols; i++) for (let j = 0; j < rows; j++) gameOfLifeGrid[i][j] = false;
-        gameOfLifeRunning = false;
-        document.getElementById('gol-play').textContent = 'PLAY';
-        document.getElementById('gol-play').style.background = '#4CAF50';
-      });
-      document.getElementById('gol-speed').addEventListener('input', (e) => {
-        gameOfLifeSpeed = parseInt(e.target.value);
-        document.getElementById('gol-speed-val').textContent = e.target.value;
-      });
-
-      // Keyboard shortcuts
-      document.addEventListener('keydown', (e) => {
-        switch(e.key.toLowerCase()) {
-          case 'g': document.getElementById('toggleGrid').click(); break;
-          case 'c': document.getElementById('toggleColor').click(); break;
-          case 'o': document.getElementById('toggleOutline').click(); break;
-          case 'w': document.getElementById('toggleWarp').click(); break;
-          case 's': document.getElementById('surprise').click(); break;
-          case 'x': document.getElementById('clear').click(); break;
-          case 'z': document.getElementById('undo').click(); break;
-          case 'l': document.getElementById('toggleGameOfLife').click(); break;
-          case 'd': document.getElementById('download-svg').click(); break;
-        }
-      });
+    // ---------------------------
+    // Export — PNG & SVG
+    // ---------------------------
+    function computeBounds() {
+      // Include brush radius so shapes/connectors and line stroke width don't get clipped
+      let minX=Infinity, maxX=-Infinity, minY=Infinity, maxY=-Infinity;
+      const pts = strokes.flat();
+      if (pts.length === 0) return null;
+      for (const p of pts) {
+        minX = Math.min(minX, p.x - radius);
+        maxX = Math.max(maxX, p.x + radius);
+        minY = Math.min(minY, p.y - radius);
+        maxY = Math.max(maxY, p.y + radius);
+      }
+      return { minX, minY, maxX, maxY, w: maxX-minX, h: maxY-minY };
     }
+    function renderToGraphics(pg, size, asLines) {
+      const b = computeBounds();
+      if (typeof pg.clear === 'function') {
+        pg.clear();
+      }
+      pg.background(255);
+      if (!b) return;
+      // pad to avoid touching edges and AA cropping
+      const pad = 2;
+      const sx = (size - pad*2) / Math.max(b.w, 1);
+      const sy = (size - pad*2) / Math.max(b.h, 1);
+      const s  = Math.min(sx, sy);
+      const offsetX = (size - b.w * s)/2 - b.minX*s;
+      const offsetY = (size - b.h * s)/2 - b.minY*s;
 
-    // ===============================================
-    // EXPORT (SVG)
-    // ===============================================
-    
-    function buildSVG(exportSize, useLines) {
-      // Calculate bounds
-      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-      strokes.flat().forEach(p => {
-        minX = Math.min(minX, p.x);
-        maxX = Math.max(maxX, p.x);
-        minY = Math.min(minY, p.y);
-        maxY = Math.max(maxY, p.y);
-      });
-      const drawingWidth = Math.max(1, maxX - minX);
-      const drawingHeight = Math.max(1, maxY - minY);
-      const offsetX = (width - drawingWidth) / 2 - minX;
-      const offsetY = (height - drawingHeight) / 2 - minY;
+      pg.push();
+      pg.translate(offsetX, offsetY);
 
-      let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${exportSize}" height="${exportSize}" viewBox="0 0 ${width} ${height}">\n`;
-      for (let i = 0; i < strokes.length; i++) {
+      for (let i=0;i<strokes.length;i++) {
         const strokePath = strokes[i];
         const col = useColors ? strokeColors[i] : color(0);
-        const hex = col.toString('#rrggbb');
-        const shape = strokeShapes[i] || 'circle';
-        if (useLines) {
-          svg += `<g stroke="${hex}" fill="none" stroke-width="${radius * 2}">\n`;
-          for (let j = 0; j < strokePath.length - 1; j++) {
-            const a = strokePath[j], b = strokePath[j + 1];
-            svg += `<line x1="${a.x + offsetX}" y1="${a.y + offsetY}" x2="${b.x + offsetX}" y2="${b.y + offsetY}" />\n`;
+        if (asLines) {
+          pg.noFill(); pg.stroke(col); pg.strokeWeight(radius*2*s);
+          for (let j=0;j<strokePath.length-1;j++) {
+            const a=strokePath[j], b=strokePath[j+1];
+            pg.line(a.x*s, a.y*s, b.x*s, b.y*s);
           }
-          svg += `</g>\n`;
         } else {
-          svg += `<g fill="${hex}" stroke="none">\n`;
-          for (let j = 0; j < strokePath.length; j++) {
-            const p = strokePath[j];
-            switch(shape) {
-              case 'square':
-                svg += `<rect x="${p.x + offsetX - radius}" y="${p.y + offsetY - radius}" width="${radius * 2}" height="${radius * 2}" />\n`;
-                break;
-              case 'circle':
-              default:
-                svg += `<circle cx="${p.x + offsetX}" cy="${p.y + offsetY}" r="${radius}" />\n`;
-                break;
-            }
-            if (j > 0) {
-              const a = strokePath[j - 1], b = p;
-              const dx = b.x - a.x, dy = b.y - a.y;
-              if (shape === 'square' && squareConnectorMode === 'corner') {
-                let aCorner1, aCorner2, bCorner1, bCorner2;
-                if (Math.abs(dx) > Math.abs(dy)) {
-                  if (dx > 0) {
-                    aCorner1 = { x: a.x + radius, y: a.y - radius };
-                    aCorner2 = { x: a.x + radius, y: a.y + radius };
-                    bCorner1 = { x: b.x - radius, y: b.y - radius };
-                    bCorner2 = { x: b.x - radius, y: b.y + radius };
-                  } else {
-                    aCorner1 = { x: a.x - radius, y: a.y - radius };
-                    aCorner2 = { x: a.x - radius, y: a.y + radius };
-                    bCorner1 = { x: b.x + radius, y: b.y - radius };
-                    bCorner2 = { x: b.x + radius, y: b.y + radius };
-                  }
-                } else {
-                  if (dy > 0) {
-                    aCorner1 = { x: a.x - radius, y: a.y + radius };
-                    aCorner2 = { x: a.x + radius, y: a.y + radius };
-                    bCorner1 = { x: b.x - radius, y: b.y - radius };
-                    bCorner2 = { x: b.x + radius, y: b.y - radius };
-                  } else {
-                    aCorner1 = { x: a.x - radius, y: a.y - radius };
-                    aCorner2 = { x: a.x + radius, y: a.y - radius };
-                    bCorner1 = { x: b.x - radius, y: b.y + radius };
-                    bCorner2 = { x: b.x + radius, y: b.y + radius };
-                  }
-                }
-                svg += `<path d=\"M ${aCorner1.x + offsetX} ${aCorner1.y + offsetY} L ${bCorner1.x + offsetX} ${bCorner1.y + offsetY} L ${bCorner2.x + offsetX} ${bCorner2.y + offsetY} L ${aCorner2.x + offsetX} ${aCorner2.y + offsetY} Z\" fill=\"${hex}\" />\n`;
-              } else {
-                const len = Math.max(1e-6, Math.sqrt(dx * dx + dy * dy));
-                const nx = dx / len, ny = dy / len;
-                const px = -ny, py = nx;
-                const ax1 = a.x + px * radius + offsetX;
-                const ay1 = a.y + py * radius + offsetY;
-                const ax2 = a.x - px * radius + offsetX;
-                const ay2 = a.y - py * radius + offsetY;
-                const bx1 = b.x + px * radius + offsetX;
-                const by1 = b.y + py * radius + offsetY;
-                const bx2 = b.x - px * radius + offsetX;
-                const by2 = b.y - py * radius + offsetY;
-                svg += `<path d=\"M ${ax1} ${ay1} L ${bx1} ${by1} L ${bx2} ${by2} L ${ax2} ${ay2} Z\" fill=\"${hex}\" />\n`;
-              }
+          // Filled shapes + connectors
+          const shape = strokeShapes[i] || 'circle';
+          // We'll draw by reusing helpers with scaled coords
+          // Set style per shape segment within helpers
+          for (let j=0;j<strokePath.length;j++) {
+            const px = strokePath[j].x*s;
+            const py = strokePath[j].y*s;
+            if (outlineOnly) { pg.stroke(col); pg.strokeWeight(1); pg.noFill(); }
+            else { pg.fill(col); pg.noStroke(); }
+            drawShapeOn(pg, px, py, radius*s, shape);
+            if (j>0) {
+              const a = createVector(strokePath[j-1].x*s, strokePath[j-1].y*s);
+              const b = createVector(px, py);
+              if (shape==='circle') drawCapsuleOn(pg, a, b, radius*s);
+              else drawConnectorOn(pg, a, b, radius*s, shape);
             }
           }
-          svg += `</g>\n`;
         }
       }
-      svg += `</svg>`;
-      return svg;
+      pg.pop();
     }
 
-    function downloadSVG(svg, filename) {
-      const blob = new Blob([svg], { type: 'image/svg+xml' });
+    function downloadBlob(filename, blob) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -1136,39 +778,208 @@
       URL.revokeObjectURL(url);
     }
 
-    // ===============================================
-    // SURPRISE ME
-    // ===============================================
-    document.getElementById("surprise").addEventListener("click", () => {
-      strokes = [];
-      strokeColors = [];
-      strokeShapes = [];
-      undoStack = [];
-      const totalStrokes = floor(random(3, 8));
-      for (let s = 0; s < totalStrokes; s++) {
-        let stroke = [];
-        let visited = new Set();
-        let x = floor(random(cols));
-        let y = floor(random(rows));
-        let length = floor(random(4, 10));
-        for (let i = 0; i < length; i++) {
-          if (x < 0 || x >= cols || y < 0 || y >= rows) break;
-          let key = `${x},${y}`;
-          if (visited.has(key)) break;
-          stroke.push(grid[x][y].copy());
-          visited.add(key);
-          const directions = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[-1,1],[1,-1]];
-          let [dx, dy] = random(directions);
-          x += dx; y += dy;
+    // Fallback SVG builder when p5.svg is unavailable
+    function buildSVGFallback(size, asLines) {
+      const b = computeBounds();
+      const serializerHeader = '<?xml version="1.0" encoding="UTF-8"?>\n';
+      if (!b) {
+        return serializerHeader + `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"></svg>`;
+      }
+      const pad = 1;
+      const sx = (size - pad*2) / Math.max(b.w, 1);
+      const sy = (size - pad*2) / Math.max(b.h, 1);
+      const s = Math.min(sx, sy);
+      const offsetX = (size - b.w * s)/2 - b.minX*s;
+      const offsetY = (size - b.h * s)/2 - b.minY*s;
+
+      let svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">\n`;
+      svg += `<g transform="translate(${offsetX},${offsetY}) scale(${s})">\n`;
+      for (let i = 0; i < strokes.length; i++) {
+        const strokePath = strokes[i];
+        const col = useColors ? strokeColors[i] : color(0);
+        const hex = col.toString('#rrggbb');
+        const shape = strokeShapes[i] || 'circle';
+        if (asLines) {
+          svg += `<g stroke="${hex}" fill="none" stroke-width="${radius * 2}">\n`;
+          for (let j = 0; j < strokePath.length - 1; j++) {
+            const a = strokePath[j], bpt = strokePath[j + 1];
+            svg += `<line x1="${a.x}" y1="${a.y}" x2="${bpt.x}" y2="${bpt.y}" />\n`;
+          }
+          svg += `</g>\n`;
+        } else {
+          svg += `<g fill="${hex}" stroke="none">\n`;
+          for (let j = 0; j < strokePath.length; j++) {
+            const p = strokePath[j];
+            if (shape === 'square') {
+              svg += `<rect x="${p.x - radius}" y="${p.y - radius}" width="${radius * 2}" height="${radius * 2}" />\n`;
+            } else {
+              svg += `<circle cx="${p.x}" cy="${p.y}" r="${radius}" />\n`;
+            }
+            if (j > 0) {
+              const a = strokePath[j - 1], bpt = p;
+              const dx = bpt.x - a.x, dy = bpt.y - a.y;
+              if (shape === 'square' && squareConnectorMode === 'corner') {
+                let aCorner1, aCorner2, bCorner1, bCorner2;
+                if (Math.abs(dx) > Math.abs(dy)) {
+                  if (dx > 0) {
+                    aCorner1 = { x: a.x + radius, y: a.y - radius };
+                    aCorner2 = { x: a.x + radius, y: a.y + radius };
+                    bCorner1 = { x: bpt.x - radius, y: bpt.y - radius };
+                    bCorner2 = { x: bpt.x - radius, y: bpt.y + radius };
+                  } else {
+                    aCorner1 = { x: a.x - radius, y: a.y - radius };
+                    aCorner2 = { x: a.x - radius, y: a.y + radius };
+                    bCorner1 = { x: bpt.x + radius, y: bpt.y - radius };
+                    bCorner2 = { x: bpt.x + radius, y: bpt.y + radius };
+                  }
+                } else {
+                  if (dy > 0) {
+                    aCorner1 = { x: a.x - radius, y: a.y + radius };
+                    aCorner2 = { x: a.x + radius, y: a.y + radius };
+                    bCorner1 = { x: bpt.x - radius, y: bpt.y - radius };
+                    bCorner2 = { x: bpt.x + radius, y: bpt.y - radius };
+                  } else {
+                    aCorner1 = { x: a.x - radius, y: a.y - radius };
+                    aCorner2 = { x: a.x + radius, y: a.y - radius };
+                    bCorner1 = { x: bpt.x - radius, y: bpt.y + radius };
+                    bCorner2 = { x: bpt.x + radius, y: bpt.y + radius };
+                  }
+                }
+                svg += `<path d="M ${aCorner1.x} ${aCorner1.y} L ${bCorner1.x} ${bCorner1.y} L ${bCorner2.x} ${bCorner2.y} L ${aCorner2.x} ${aCorner2.y} Z" />\n`;
+              } else {
+                const len = Math.max(1e-6, Math.sqrt(dx*dx + dy*dy));
+                const nx = dx / len, ny = dy / len;
+                const px = -ny, py = nx;
+                const ax1 = a.x + px * radius;
+                const ay1 = a.y + py * radius;
+                const ax2 = a.x - px * radius;
+                const ay2 = a.y - py * radius;
+                const bx1 = bpt.x + px * radius;
+                const by1 = bpt.y + py * radius;
+                const bx2 = bpt.x - px * radius;
+                const by2 = bpt.y - py * radius;
+                svg += `<path d="M ${ax1} ${ay1} L ${bx1} ${by1} L ${bx2} ${by2} L ${ax2} ${ay2} Z" />\n`;
+              }
+            }
+          }
+          svg += `</g>\n`;
         }
-        if (stroke.length > 1) {
-          const col = useColors ? color(random(30, 255), random(30, 255), random(30, 255)) : color(0);
-          undoStack.push({ stroke: stroke.map(p => p.copy()), color: col, shape: brushShape });
+      }
+      svg += `</g>\n</svg>`;
+      return serializerHeader + svg;
+    }
+
+    document.getElementById("export-png").addEventListener("click", () => {
+      const size = parseInt(document.getElementById("export-size").value);
+      const asLines = document.getElementById("mode-toggle")?.checked ?? false;
+      const pg = createGraphics(size, size);
+      renderToGraphics(pg, size, asLines);
+      const dataURL = pg.elt.toDataURL("image/png");
+      downloadBlob(`gr1d-${size}px.png`, (function(){const b = atob(dataURL.split(',')[1]); const len=b.length; const u8=new Uint8Array(len); for (let i=0;i<len;i++) u8[i]=b.charCodeAt(i); return new Blob([u8], {type:'image/png'});})());
+    });
+
+    document.getElementById("export-svg").addEventListener("click", () => {
+      const size = parseInt(document.getElementById("export-size").value);
+      const asLines = document.getElementById("mode-toggle")?.checked ?? false;
+      if (typeof SVG !== 'undefined') {
+        // Use p5.svg renderer when available
+        const pg = createGraphics(size, size, SVG);
+        renderToGraphics(pg, size, asLines);
+        const svg = pg.elt; // <svg> element
+        // Serialize
+        const serializer = new XMLSerializer();
+        let content = serializer.serializeToString(svg);
+        if (!content.startsWith('<?xml')) {
+          content = '<?xml version="1.0" encoding="UTF-8"?>\n' + content;
+        }
+        const blob = new Blob([content], {type: 'image/svg+xml;charset=utf-8'});
+        downloadBlob(`gr1d-${size}px.svg`, blob);
+      } else {
+        // Fallback: build SVG string manually (no plugin)
+        const content = buildSVGFallback(size, asLines);
+        const blob = new Blob([content], {type: 'image/svg+xml;charset=utf-8'});
+        downloadBlob(`gr1d-${size}px.svg`, blob);
+      }
+    });
+
+    // ---------------------------
+    // Surprise / Game of Life UI
+    // ---------------------------
+    document.getElementById("surprise").addEventListener("click", () => {
+      strokes = []; strokeColors = []; strokeShapes=[]; undoStack = [];
+      const totalStrokes = floor(random(3,8));
+      for (let s=0;s<totalStrokes;s++) {
+        const stroke=[]; const visited = new Set();
+        let x=floor(random(cols)), y=floor(random(rows));
+        let length=floor(random(4,10));
+        for (let i=0;i<length;i++) {
+          if (x<0||x>=cols||y<0||y>=rows) break;
+          const key = `${x},${y}`; if (visited.has(key)) break;
+          stroke.push(grid[x][y].copy()); visited.add(key);
+          const directions=[[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[-1,1],[1,-1]];
+          const [dx,dy] = random(directions);
+          x+=dx; y+=dy;
+        }
+        if (stroke.length>1) {
+          const col = useColors ? color(random(30,255), random(30,255), random(30,255)) : color(0);
+          undoStack.push({ stroke: stroke.map(p=>p.copy()), color: col, shape: brushShape });
         }
       }
       applyUndoStack();
     });
+
+    document.getElementById("toggleGameOfLife").addEventListener("click", (e) => {
+      gameOfLifeMode = !gameOfLifeMode;
+      e.target.classList.toggle('active', gameOfLifeMode);
+      const ctrls = document.getElementById('game-of-life-controls');
+      if (gameOfLifeMode) {
+        ctrls.style.display = 'block';
+        initGameOfLife();
+        warpMode = false;
+        document.getElementById('toggleWarp').classList.remove('active');
+      } else {
+        ctrls.style.display = 'none';
+        gameOfLifeRunning = false;
+        document.getElementById('gol-play').textContent = 'PLAY';
+        document.getElementById('gol-play').style.background = '#4CAF50';
+      }
+    });
+    document.getElementById('gol-play').addEventListener('click', (e) => {
+      gameOfLifeRunning = !gameOfLifeRunning;
+      if (gameOfLifeRunning) { e.target.textContent='PAUSE'; e.target.style.background='#f44336'; }
+      else { e.target.textContent='PLAY'; e.target.style.background='#4CAF50'; }
+    });
+    document.getElementById('gol-step').addEventListener('click', () => updateGameOfLife());
+    document.getElementById('gol-clear').addEventListener('click', () => {
+      for (let i=0;i<cols;i++) for (let j=0;j<rows;j++) gameOfLifeGrid[i][j]=false;
+      gameOfLifeRunning=false;
+      document.getElementById('gol-play').textContent='PLAY';
+      document.getElementById('gol-play').style.background='#4CAF50';
+    });
+    document.getElementById('gol-speed').addEventListener('input', (e)=>{
+      gameOfLifeSpeed = parseInt(e.target.value);
+      document.getElementById('gol-speed-val').textContent = e.target.value;
+    });
+
+    // ---------------------------
+    // Shortcuts
+    // ---------------------------
+    document.addEventListener('keydown', (e) => {
+      switch(e.key.toLowerCase()) {
+        case 'g': document.getElementById('toggleGrid').click(); break;
+        case 'c': document.getElementById('toggleColor').click(); break;
+        case 'o': document.getElementById('toggleOutline').click(); break;
+        case 'w': document.getElementById('toggleWarp').click(); break;
+        case 's': document.getElementById('surprise').click(); break;
+        case 'x': document.getElementById('clear').click(); break;
+        case 'z': document.getElementById('undo').click(); break;
+        case 'l': document.getElementById('toggleGameOfLife').click(); break;
+        case '1': document.querySelector('[data-shape="circle"]').click(); break;
+        case '2': document.querySelector('[data-shape="square"]').click(); break;
+        case 'p': document.getElementById('export-png').click(); break;
+        case 'v': document.getElementById('export-svg').click(); break;
+      }
+    });
   </script>
 </body>
 </html>
-
