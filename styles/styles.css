@@ -62,9 +62,7 @@ footer .socials img { width: 1em; height: 1em; display: block; }
 }
 
 /* Construct hover: swap leading ✎ with loading GIF */
-.construct-gif { width: 1em; height: 1em; vertical-align: -0.15em; display: none; }
-[data-key="construct"]:hover .construct-letter { display: none; }
-[data-key="construct"]:hover .construct-gif { display: inline-block; }
+/* (removed) */
 
 
 /* (SVG icon styles removed) */
@@ -74,10 +72,7 @@ footer .socials img { width: 1em; height: 1em; display: block; }
   transition: color ease;
 }
 
-.slogan:hover {
-  color: #684EFF;       /* pick any accent color */
-  transition: color ease;
-}
+/* (slogan hover removed) */
 
 /* Tool page: new hover color */
 body.tool-page .chunk:hover {
@@ -178,7 +173,7 @@ a, a:hover, a:focus, a:active, a:visited { text-decoration: none !important; }
   position: fixed;
   right: 20px;
   bottom: 40px;
-  width: min(30vw, 600px);
+  width: min(30vw, 180px);
   height: auto;
   display: block;
   z-index: 8;

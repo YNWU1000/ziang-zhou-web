@@ -13,8 +13,7 @@
   const src = document.getElementById('source');
   if (!src) return;
 
-  // Sequential slogans across reloads
-  selectSloganInSequence(src);
+  // (slogan sequencing removed)
 
   // Ensure #out exists
   let out = document.getElementById('out');
@@ -482,19 +481,7 @@ function stop() {
     }));
   }
 
-  // ——— Slogan sequence (persistent) ———
-  function selectSloganInSequence(srcRoot) {
-    const slogans = Array.from(srcRoot.querySelectorAll('.slogan'));
-    slogans.forEach(s => s.style.display = 'none');
-    if (!slogans.length) return null;
-    let idx = 0;
-    try { const raw = localStorage.getItem('slogan_seq_index'); idx = raw ? (parseInt(raw, 10) || 0) : 0; } catch (_) {}
-    const showIdx = ((idx % slogans.length) + slogans.length) % slogans.length;
-    const chosen = slogans[showIdx];
-    chosen.style.display = 'inline-block';
-    try { localStorage.setItem('slogan_seq_index', ((showIdx + 1) % slogans.length).toString()); } catch (_) {}
-    return chosen;
-  }
+  // (slogan sequence logic removed)
 })();
 
 // ——— Homepage: word-level scramble on hover for
@@ -566,27 +553,7 @@ document.addEventListener('app:paragraph-ready', (e) => {
 
 // Swap the leading ✎ with a loading GIF on hover (after typing is ready)
 // Swap the leading ✎ with a loading GIF on hover (after typing is ready)
-document.addEventListener('app:paragraph-ready', (e) => {
-  const p = e && e.detail && e.detail.p; if (!p) return;
-  const el = p.querySelector('[data-key="construct"]');
-  if (!el || el.__gifReady) return;
-  const txt = el.textContent || '';
-  if (!txt.trim().startsWith('✎')) return; // expect leading symbol
-  const rest = txt.replace(/^✎\s?/, '');
-  el.textContent = '';
-  const letter = document.createElement('span');
-  letter.className = 'construct-letter';
-  letter.textContent = '✎';
-  const img = document.createElement('img');
-  img.src = 'assets/loading-windows.gif';
-  img.alt = '';
-  img.setAttribute('aria-hidden','true');
-  img.className = 'construct-gif';
-  el.appendChild(letter);
-  el.appendChild(img);
-  el.appendChild(document.createTextNode(' ' + rest));
-  el.__gifReady = true;
-});
+// (construct GIF hover behavior removed)
 
 // Fallback: delegated click handler for "Graphic Design" in case local wiring missed
 (function globalEmojiRainBinder(){
