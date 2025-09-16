@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>In memories of GPT-3 - Ziang Zhou</title>
+  <meta name="description" content="Cut-up collage — a generative text experiment by Ziang Zhou.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://ziangzhou.com/side.html">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <meta property="og:title" content="In memories of GPT-3">
+  <meta property="og:description" content="A generative text experiment by Ziang Zhou.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://ziangzhou.com/side.html">
+  <meta property="og:image" content="https://ziangzhou.com/images/me.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="In memories of GPT-3 - Ziang Zhou">
+  <meta name="twitter:description" content="A generative text experiment by Ziang Zhou.">
+  <meta name="twitter:image" content="https://ziangzhou.com/images/me.jpg">
+  <link rel="stylesheet" href="styles/styles.css">
+  <style>
+    /* About control */
+    #aboutBtn { position: fixed; top: 12px; right: 20px; z-index: 2000; background: transparent; border: 0; padding: 0; font: inherit; font-size: 16px; line-height: 1; color: inherit; cursor: default; }
+    #aboutBtn:hover { color: #ff2aa1; }
+
+    /* Overlay + modal with slow opacity; blur the whole page again */
+    #aboutOverlay { position: fixed; inset: 0; background: rgba(255,255,255,0.2); opacity: 0; pointer-events: none; z-index: 1999; backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px); transition: opacity .6s ease, backdrop-filter .6s ease, -webkit-backdrop-filter .6s ease; }
+    #aboutModal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(.98); width: min(90vw, 420px); max-height: 60vh; overflow: auto; background: #fff; color: #000; box-shadow: none; border-radius: 0; padding: 16px 18px; opacity: 0; pointer-events: none; z-index: 2001; transition: opacity .6s ease, transform .6s ease; text-align: center; font-family: inherit; }
+    body.about-open #aboutOverlay { opacity: 1; pointer-events: auto; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+    body.about-open #aboutModal { opacity: 1; transform: translate(-50%, -50%) scale(1); pointer-events: auto; }
+    #aboutClose { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); background: transparent; border: 0; font: inherit; font-size: 16px; line-height: 1; color: inherit; cursor: default; }
+    #aboutClose:hover { color: #ff2aa1; }
+    #aboutModal h2 { margin: 18px 0 10px 0; font-size: 20px; font-weight: 600; }
+    #aboutModal p { margin: 0; font-size: 15px; line-height: 1.6; color: #333; }
+  </style>
+</head>
+<body>
+<button id="aboutBtn" aria-haspopup="dialog" aria-controls="aboutModal">◥ About</button>
+<h1 class="sr-only">In memories of GPT-3 - Ziang Zhou</h1>
+
+<!-- Seed text (typed by basic.js), then we keep appending dynamically -->
+<p id="source" aria-label="Cut-up collage">
+  <span class="chunk">In Memories of GPT-3</span>.
+  <br />
+  <span class="chunk">Senseless & Decrypted.</span><br />
+</p>
+
+<p id="out" aria-live="polite" aria-atomic="true"></p>
+
+<noscript>
+  <div class="noscript-content">Senseless & Decrypted — cut-up collage.</div>
+  </noscript>
+
+<script defer src="js/basic.js"></script>
+<script>
+  // After the initial typing is done, continuously append scrambled-typed phrases
+  document.addEventListener('app:paragraph-ready', (e) => {
+    const p = e.detail && e.detail.p ? e.detail.p : document.getElementById('out');
+    if (!p) return;
+
+    // Lightweight local "LLM" token generator (cut-up style)
+    const A = [
+      'process', 'fire', 'midnight', 'buffer', 'chorus', 'syntax', 'mercury', 'dream', 'cache', 'window',
+      'loop', 'clouds', 'debug', 'whisper', 'compile', 'handoff', 'paper', 'signal', 'echo', 'drift',
+      'prisoner', 'hinge', 'model', 'mask', 'tunnel', 'orbit', 'door', 'kernel', 'white', 'static'
+    ];
+    const B = [
+      'breaks again', 'is a better guest', 'forgets the key', 'reboots', 'waits patiently', 'changes tone',
+      'asks the room', 'speaks in logs', 'draws a square', 'just want you'
+    ];
+    const C = [
+      '– now', ': take a break!', '[guest]', '{draft}', '/// composition', '… or does it?', '— probably', '– cut to black.'
+    ];
+
+    function pick(arr){ return arr[(Math.random()*arr.length)|0]; }
+
+    async function typeScramble(el, text) {
+      const CHARS = '█▓▒░#%*+—=<>/\\[]{}()ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+      for (const ch of text) {
+        el.textContent += CHARS[(Math.random()*CHARS.length)|0];
+        await sleep(5 + Math.random()*8);   // ~3x faster
+        el.textContent = el.textContent.slice(0, -1) + ch;
+        await sleep(3 + Math.random()*6);   // ~3x faster
+      }
+    }
+
+    async function appendPhrase() {
+      const span = document.createElement('span');
+      span.className = 'chunk';
+      p.appendChild(span);
+      const phrase = `${pick(A)} ${pick(B)} ${pick(C)}`;
+      await typeScramble(span, phrase);
+      // random line breaks for jagged layout
+      if (Math.random() < 0.5) p.appendChild(document.createElement('br'));
+    }
+
+    let running = true;
+    async function loop() {
+      // Stop when the text visually fills the viewport height (leave a bit of footer space)
+      const rect = p.getBoundingClientRect();
+      const limit = innerHeight - 80;
+      if (rect.bottom >= limit) { running = false; return; }
+      await appendPhrase();
+      if (running) requestAnimationFrame(loop);
+    }
+    // kick off after a short pause so #out is present
+    setTimeout(() => requestAnimationFrame(loop), 200);
+  }, { once: true });
+
+  // ——— About modal wiring ———
+  (function aboutModal(){
+    const btn = document.getElementById('aboutBtn');
+    // Build overlay + modal once
+    if (!document.getElementById('aboutOverlay')) {
+      const ov = document.createElement('div'); ov.id = 'aboutOverlay'; document.body.appendChild(ov);
+      const md = document.createElement('div'); md.id = 'aboutModal'; md.setAttribute('role','dialog'); md.setAttribute('aria-modal','true'); md.setAttribute('aria-labelledby','aboutTitle');
+      md.innerHTML = '<button id="aboutClose" aria-label="Close">✕</button>' +
+                     '<h2 id="aboutTitle">In Memories of GPT‑3</h2>' +
+                     '<p>This project is a gentle cut‑up of words and moods — a small ritual for GPT‑3. Phrases unravel and recombine into a quiet stream, somewhere between debugging logs and nocturnal poetry.</p>';
+      document.body.appendChild(md);
+    }
+    const ovl = document.getElementById('aboutOverlay');
+    const modal = document.getElementById('aboutModal');
+    const close = document.getElementById('aboutClose');
+
+    function open(){ document.body.classList.add('about-open'); }
+    function shut(){ document.body.classList.remove('about-open'); }
+
+    btn && btn.addEventListener('click', open);
+    ovl && ovl.addEventListener('click', shut);
+    close && close.addEventListener('click', shut);
+    window.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') shut(); });
+  })();
+</script>
+
+</body>
+</html>

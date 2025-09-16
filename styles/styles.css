@@ -9,6 +9,10 @@ html, body {
   color: #000000;
 }
 
+/* Hide scrollbars globally while preserving scroll behavior */
+* { -ms-overflow-style: none; scrollbar-width: none; }
+*::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
 body {
   font-family: "ABC Monument Grotesk";
   display: flex;
@@ -252,6 +256,152 @@ body.gallery-active #out {
 
 /* Optional: keep blending scoped cleanly */
 body { isolation: isolate; }   /* prevents blending from leaking to the page root */
+
+/* View toggle button (top-right) */
+#viewToggle {
+  position: fixed;
+  right: 28px;   /* align with footer right */
+  bottom: 12px;  /* align with footer bottom */
+  z-index: 1002;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-size: clamp(12px, 4.5vw, 18px);
+  line-height: 1;
+  color: inherit;
+  cursor: default; /* match site behavior */
+}
+#viewToggle[aria-pressed="true"] { color: #ff2aa1; }
+
+/* Projects: right-side scrollable list (titles only) */
+#projectsPanel {
+  position: fixed;
+  top: 28px;
+  right: 20px;
+  width: min(50vw, 560px);
+  max-height: 85vh;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  pointer-events: auto;
+  color: #000;
+  font-size: clamp(12px, 6vw, 24px);
+  line-height: 1;
+  letter-spacing: -0.01em;
+  z-index: 12;
+  text-align: right;
+}
+#projectsPanel .list { display: grid; gap: 0; }
+#projectsPanel .proj { display: block; }
+#projectsPanel .title { font-weight: 500; display: inline-block; }
+#projectsPanel .proj .chunk { cursor: default; }
+/* no dividers between items */
+
+/* Centered preview on hover */
+#projectPreview {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(70vw, 900px);
+  height: min(70vh, 700px);
+  display: none;
+  pointer-events: none;
+  z-index: 1003; /* above projects panel and footer */
+}
+#projectPreview img { width: 100%; height: 100%; object-fit: contain; display: block; }
+/* Blur-in transition for hover preview */
+#projectPreview img {
+  transition: filter 820ms cubic-bezier(.2,.7,0,1),
+              transform 900ms cubic-bezier(.2,.7,0,1),
+              opacity 520ms ease-in-out;
+}
+#projectPreview img.is-loading {
+  filter: blur(16px) saturate(1.06) contrast(0.98);
+  transform: scale(1.02);
+  opacity: 0.92;
+}
+
+/* Bottom-left meta on hover (list view) */
+#projectMeta {
+  position: fixed;
+  left: 28px;      /* align with footer */
+  bottom: 54px;    /* sit above footer */
+  font-size: 16px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: #000;
+  pointer-events: none;
+  text-align: left;
+  z-index: 1002;
+}
+#projectMeta .title,
+#projectMeta .muted { display: block; }
+#projectMeta .muted { color: #9aa0a6; }
+
+/* Thumbnails mode */
+#projectsPanel.thumbs { text-align: center; }
+#projectsPanel.thumbs .list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+}
+#projectsPanel.thumbs .proj { display: block; }
+#projectsPanel.thumbs .proj img.thumb {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  display: block;
+}
+#projectsPanel:not(.thumbs) img.thumb { display: none !important; }
+#projectsPanel.thumbs .title { display: none !important; }
+
+/* Desktop: spread thumbnails across the top, 8 per row */
+@media (min-width: 769px) {
+  #projectsPanel.thumbs {
+    position: fixed;
+    top: 12px;
+    right: 20px;
+    left: auto;
+    transform: none;
+    width: 60vw;
+    max-width: 60vw;
+    max-height: 45vh;
+    overflow: auto;
+  }
+  #projectsPanel.thumbs .list { grid-template-columns: repeat(8, 1fr); }
+}
+
+/* Filter buttons visual state */
+.filter { color: inherit !important; cursor: default; }
+.filter.active { color: #ff2aa1 !important; }
+
+/* Responsive (mobile): dock list near middle-right */
+@media (max-width: 768px) {
+  #projectsPanel {
+    position: fixed;
+    top: 65%;
+    right: 20px;
+    transform: translateY(-50%);
+    width: min(80vw, 420px);
+    max-height: 60vh; /* keep visible and scrollable */
+    margin: 0; /* JS won't add margins */
+    text-align: right;
+  }
+  #projectPreview { display: none !important; }
+}
+
+/* Visually hidden, accessible text (for SEO/a11y) */
+.sr-only {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 1px, 1px);
+  white-space: nowrap; border: 0;
+}
+
+/* Noscript visible text block */
+.noscript-content { font-family: "ABC Monument Grotesk"; font-size: 16px; line-height: 1.2; margin-top: 8px; }
 
 /* Global mobile tweaks: slightly reduced left padding */
 @media (max-width: 768px) {

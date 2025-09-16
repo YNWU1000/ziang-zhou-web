@@ -239,84 +239,7 @@
       window.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') closeRunner(); });
     }
 
-    // --- Minimal one-by-one gallery on the right ---
-(function simpleRightGallery() {
-  const box = document.getElementById('sideGallery');
-  const img = document.getElementById('sideImage');
-  if (!box || !img) return;
-
-  // Map each keyword to its image list (update paths)
-  // Use available images; map other keys to the same set so all hovers work.
-  const G = {
-    identity:  [
-      'images/identity/01.jpg'
-    ],
-    interface: [
-      'images/interface/01.jpg',
-      'images/interface/02.jpg',
-      'images/interface/03.jpg',
-      'images/interface/04.jpg',
-      'images/interface/05.jpg',
-      'images/interface/06.jpg'
-    ],
-    tool:      []
-  };
-
-  // Preload (non-blocking)
-  Object.values(G).forEach(list => list.forEach(src => { const im = new Image(); im.src = src; }));
-
-  let timer = null;
-  let i = 0;
-  let active = null;
-  const INTERVAL = 666; // ms per frame; raise for slower, lower for faster
-
-  function start(key) {
-    // Proceed only if this category has images
-    const list = G[key];
-    if (!list || !list.length) return;
-
-    stop();                         // clear any previous run FIRST
-    active = list;
-    i = 0;
-    img.style.opacity = '1';
-    img.src = active[0];
-
-    box.style.display = 'block';    // now show the panel
-    document.body.classList.add('gallery-active');
-
-    timer = setInterval(() => {
-      i = (i + 1) % active.length;
-      img.src = active[i];
-    }, INTERVAL);
-  }
-
-function stop() {
-  if (timer) { clearInterval(timer); timer = null; }
-  box.style.display = 'none';
-  img.style.opacity = '1';
-  document.body.classList.remove('gallery-active'); // <-- and this
-  active = null;
-}
-
-  // Hook up the three words (mouse + touch)
-  [
-    ['identity',  p.querySelector('[data-key="identity"]')],
-    ['interface', p.querySelector('[data-key="interface"]')],
-    ['tool',      p.querySelector('[data-key="tool"]')]
-  ].forEach(([key, el]) => {
-    if (!el) return;
-    // Mouse hover
-    el.addEventListener('mouseenter', () => start(key));
-    el.addEventListener('mouseleave', stop);
-    // Touch interactions (mobile): press to show, release to hide
-    el.addEventListener('touchstart', () => start(key), { passive: true });
-    el.addEventListener('touchend', stop, { passive: true });
-    el.addEventListener('touchcancel', stop, { passive: true });
-  });
-
-  // Safety: stop when tab hidden
-  document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
-})();
+    // (Hover gallery on identity/interface removed)
 
     // SF map tooltip hover/follow
     const sf = p.querySelector('[data-key="sanfrancisco"]');
@@ -384,21 +307,15 @@ function stop() {
         setTimeout(() => { if (img && img.parentNode) img.parentNode.removeChild(img); }, 5200);
       }
 
-      // On mobile (coarse pointer): disable dragging; tap to fade out slowly
-      if (isCoarse) {
-        img.style.cursor = 'default';
-        img.style.touchAction = 'manipulation';
-        img.addEventListener('click', fadeOutSlow);
-        img.addEventListener('touchstart', (e) => { e.preventDefault(); fadeOutSlow(); }, { passive: false });
-        return; // no dragging bindings on mobile
-      }
       function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
-      function onMove(clientX, clientY){
-        const x = clamp(clientX - offX, 0, innerWidth - img.offsetWidth);
-        const y = clamp(clientY - offY, 0, innerHeight - img.offsetHeight);
-        img.style.left = x + 'px';
-        img.style.top  = y + 'px';
+      function onMoveXY(x, y){
+        const nx = clamp(x - offX, 0, innerWidth - img.offsetWidth);
+        const ny = clamp(y - offY, 0, innerHeight - img.offsetHeight);
+        img.style.left = nx + 'px';
+        img.style.top  = ny + 'px';
       }
+
+      // Mouse drag (desktop)
       img.addEventListener('mousedown', (e) => {
         if (img.__dismissed) return;
         dragging = true; img.style.cursor = 'grabbing';
@@ -406,9 +323,23 @@ function stop() {
         offY = e.clientY - img.offsetTop;
         e.preventDefault();
       });
-      window.addEventListener('mousemove', (e) => { if (dragging) onMove(e.clientX, e.clientY); });
+      window.addEventListener('mousemove', (e) => { if (dragging) onMoveXY(e.clientX, e.clientY); });
       window.addEventListener('mouseup', () => { if (dragging) { dragging = false; img.style.cursor = 'grab'; } });
-      // (no mobile touch drag; desktop only)
+
+      // Touch drag (mobile/coarse)
+      img.style.touchAction = 'none';
+      img.addEventListener('touchstart', (e) => {
+        if (img.__dismissed) return;
+        const t = e.touches && e.touches[0]; if (!t) return;
+        dragging = true; img.style.cursor = 'grabbing';
+        offX = t.clientX - img.offsetLeft;
+        offY = t.clientY - img.offsetTop;
+      }, { passive: true });
+      window.addEventListener('touchmove', (e) => {
+        if (!dragging) return; const t = e.touches && e.touches[0]; if (!t) return; onMoveXY(t.clientX, t.clientY);
+      }, { passive: true });
+      window.addEventListener('touchend', () => { if (dragging) { dragging = false; img.style.cursor = 'grab'; } }, { passive: true });
+      window.addEventListener('touchcancel', () => { if (dragging) { dragging = false; img.style.cursor = 'grab'; } }, { passive: true });
 
       // Double-click to fade out slowly, then remove
       img.addEventListener('dblclick', fadeOutSlow);
@@ -482,6 +413,276 @@ function stop() {
   }
 
   // (slogan sequence logic removed)
+})();
+
+// ——— Homepage projects: hover preview + tag filters ———
+(function homeProjects() {
+  const panel = document.getElementById('projectsPanel');
+  const preview = document.getElementById('projectPreview');
+  const img = preview ? preview.querySelector('img') : null;
+  if (!panel || !preview || !img) return;
+
+  // Always animate the blur every hover, even when cached
+  let lastToken = 0; // guards async load swap when moving quickly
+  const MIN_BLUR_MS = 0; // keep blur visible a bit longer
+
+  function showPreview(fullSrc, lowSrc) {
+    if (!fullSrc) return;
+    preview.style.display = 'block';
+
+    const token = ++lastToken;
+    img.classList.add('is-loading'); // start blurred every time
+
+    // If we have a low-res placeholder, use it immediately while preloading full
+    if (lowSrc && img.getAttribute('src') !== lowSrc) {
+      img.src = lowSrc;
+    }
+
+    const swapToFull = () => {
+      if (token !== lastToken) return;
+      const start = performance.now();
+      if (img.getAttribute('src') !== fullSrc) img.src = fullSrc;
+      // Ensure the blur lasts at least MIN_BLUR_MS for a perceptible morph
+      requestAnimationFrame(() => {
+        const elapsed = performance.now() - start;
+        const remaining = Math.max(0, MIN_BLUR_MS - elapsed);
+        setTimeout(() => { if (token === lastToken) img.classList.remove('is-loading'); }, remaining);
+      });
+    };
+
+    if (lowSrc) {
+      // Preload then swap
+      const loader = new Image();
+      loader.decoding = 'async';
+      loader.src = fullSrc;
+      loader.onload = swapToFull;
+      loader.onerror = swapToFull; // still remove blur if error
+    } else {
+      // No placeholder: show full image but keep blur for the minimum duration
+      swapToFull();
+    }
+  }
+  function hidePreview() {
+    preview.style.display = 'none';
+    // Keep src to benefit from browser cache on re-hover
+  }
+
+  function wireListHover() {
+    const meta = document.getElementById('projectMeta');
+    function setMetaFrom(item){
+      if (!meta || panel.classList.contains('thumbs')) return;
+      const link = item.querySelector('a.title');
+      const title = (link && (link.textContent||'').trim()) || '';
+      const subtitle = item.getAttribute('data-subtitle') || '';
+      const category = item.getAttribute('data-category') || ((item.getAttribute('data-tags')||'').split(',')[0]||'').trim();
+      const year = item.getAttribute('data-year') || '';
+      const lines = [];
+      if (title) lines.push('<div class="title">'+title+'</div>');
+      if (subtitle) lines.push('<div class="muted">'+subtitle+'</div>');
+      if (category) lines.push('<div class="muted">'+category+'</div>');
+      if (year) lines.push('<div class="muted">'+year+'</div>');
+      meta.innerHTML = lines.join('');
+    }
+    function clearMeta(){ const el = document.getElementById('projectMeta'); if (el) el.textContent=''; }
+
+    panel.querySelectorAll('.proj').forEach(item => {
+      const link = item.querySelector('a.title');
+      if (!link) return;
+      const src = item.getAttribute('data-preview');
+      const low = item.getAttribute('data-preview-low');
+      const maybeShow = () => { if (!panel.classList.contains('thumbs')) { showPreview(src, low); setMetaFrom(item); } };
+      const maybeClear = () => { hidePreview(); clearMeta(); };
+      link.addEventListener('mouseenter', maybeShow);
+      link.addEventListener('mouseleave', maybeClear);
+      link.addEventListener('focus', maybeShow);
+      link.addEventListener('blur', maybeClear);
+      link.addEventListener('touchstart', () => { if (!panel.classList.contains('thumbs')) setMetaFrom(item); }, { passive: true });
+    });
+  }
+  wireListHover();
+
+  // One-time concurrent scramble typing for project titles (list view)
+  (function typeProjectTitlesOnceScramble(){
+    if (window.App && window.App.__listTitlesTyped) return;
+    if (panel.classList.contains('thumbs')) return; // only in list view
+    const links = Array.from(panel.querySelectorAll('.proj a.title'));
+    if (!links.length) return;
+
+    const CHARS = "█▓▒░#%*+—=<>/\\[]{}()ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    const SCRAMBLE_TAIL = 8;
+    const CHARS_PER_SECOND = 10; // slightly slower than before
+    const ease = (t) => 1 - Math.pow(1 - t, 3);
+
+    const items = links.map(a => {
+      const full = (a.textContent || '').trim();
+      const len = full.length;
+      // Duration scaled like paragraph, but with reasonable caps for short titles
+      const scaled = (len / Math.max(1, CHARS_PER_SECOND)) * 1000;
+      const duration = Math.max(800, Math.min(2800, Math.round(scaled)));
+      return { node: a, text: full, len, duration, start: performance.now(), done: false };
+    });
+    // Clear all text before starting
+    items.forEach(it => { it.node.textContent = ''; });
+
+    function frame(){
+      let allDone = true;
+      const now = performance.now();
+      for (const it of items) {
+        if (it.done) continue;
+        allDone = false;
+        const t = Math.min(1, (now - it.start) / it.duration);
+        const revealed = Math.floor(it.len * ease(t));
+        const tip = it.text.slice(0, revealed);
+        const tailLen = Math.min(SCRAMBLE_TAIL, Math.max(0, it.len - revealed));
+        let tail = '';
+        for (let i = 0; i < tailLen; i++) tail += CHARS[(Math.random()*CHARS.length)|0];
+        it.node.textContent = tip + tail;
+        if (t >= 1) { it.node.textContent = it.text; it.done = true; }
+      }
+      // If switched to thumbnail mode mid-typing, reveal everything and stop
+      if (panel.classList.contains('thumbs')) {
+        items.forEach(it => { it.node.textContent = it.text; it.done = true; });
+        allDone = true;
+      }
+      if (!allDone) requestAnimationFrame(frame);
+      else { if (!window.App) window.App = {}; window.App.__listTitlesTyped = true; }
+    }
+    requestAnimationFrame(frame);
+  })();
+
+  // Filters: Identity / Interface / Tool at the top
+  const filters = Array.from(document.querySelectorAll('.filter[data-filter]'));
+  let active = null;
+
+  function applyFilter(tag) {
+    if (panel.classList.contains('thumbs')) return; // ignore filters in thumbnails mode
+    const t = (tag || '').trim();
+    panel.querySelectorAll('.proj').forEach(item => {
+      const tags = (item.getAttribute('data-tags') || '').split(',').map(s => s.trim().toLowerCase());
+      const match = !t || tags.includes(t.toLowerCase());
+      item.style.display = match ? 'block' : 'none';
+    });
+    filters.forEach(f => f.classList.toggle('active', f.getAttribute('data-filter') === t));
+  }
+
+  function toggleFilter(tag) {
+    if (active === tag) { active = null; applyFilter(null); }
+    else { active = tag; applyFilter(tag); }
+  }
+
+  filters.forEach(f => {
+    const tag = f.getAttribute('data-filter');
+    f.addEventListener('click', (e) => {
+      // If it's the Tool link, allow meta/ctrl click to navigate to tool.html
+      if (f.tagName.toLowerCase() === 'a') {
+        if (e.metaKey || e.ctrlKey) return; // allow open in new tab
+        e.preventDefault();
+      }
+      toggleFilter(tag);
+    });
+    f.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleFilter(tag); }
+    });
+  });
+
+  // Clear preview when page/tab hidden
+  document.addEventListener('visibilitychange', () => { if (document.hidden) hidePreview(); });
+
+  // View mode toggle: list ↔ thumbnails
+  const btn = document.getElementById('viewToggle');
+  const list = panel.querySelector('.list');
+  function buildThumbsContent() {
+    const baseHTML = panel.__origListHTML || list.innerHTML;
+    const tmp = document.createElement('div');
+    tmp.innerHTML = baseHTML;
+    const result = document.createElement('div');
+    Array.from(tmp.querySelectorAll('.proj')).forEach(pItem => {
+      const href = (pItem.querySelector('a') && pItem.querySelector('a').getAttribute('href')) || '#';
+      const name = (pItem.querySelector('a') && (pItem.querySelector('a').textContent||'').trim()) || '';
+      const photosAttr = pItem.getAttribute('data-photos');
+      const preview = pItem.getAttribute('data-preview');
+      let photos = [];
+      if (photosAttr) photos = photosAttr.split(',').map(s => s.trim()).filter(Boolean);
+      else if (preview) photos = [preview];
+      photos.forEach(src => {
+        const wrap = document.createElement('div'); wrap.className = 'proj';
+        const a = document.createElement('a'); a.href = href; a.className = 'link';
+        const im = document.createElement('img'); im.className = 'thumb'; im.src = src; im.alt = name ? (name + ' preview') : '';
+        a.appendChild(im); wrap.appendChild(a); result.appendChild(wrap);
+      });
+    });
+    return result.innerHTML;
+  }
+  if (btn) {
+    btn.addEventListener('click', () => {
+      const turningOn = !panel.classList.contains('thumbs');
+      if (turningOn) {
+        if (!panel.__origListHTML) panel.__origListHTML = list.innerHTML;
+        list.innerHTML = buildThumbsContent();
+        panel.classList.add('thumbs');
+        hidePreview();
+        { const metaEl = document.getElementById('projectMeta'); if (metaEl) metaEl.textContent=''; }
+        btn.setAttribute('aria-pressed','true');
+        btn.textContent = '◨ List';
+      } else {
+        // Restore original list and rebind hover
+        if (panel.__origListHTML) list.innerHTML = panel.__origListHTML;
+        panel.classList.remove('thumbs');
+        hidePreview();
+        { const metaEl = document.getElementById('projectMeta'); if (metaEl) metaEl.textContent=''; }
+        wireListHover();
+        btn.setAttribute('aria-pressed','false');
+        btn.textContent = '◧ Thumbs';
+      }
+    });
+  }
+})();
+
+// ——— Route mouse wheel anywhere to scroll the projects list ———
+(function globalWheelToProjects(){
+  const panel = document.getElementById('projectsPanel');
+  if (!panel) return;
+  function onWheel(e){
+    // Only handle vertical scroll deltas
+    const dy = e.deltaY;
+    if (!dy) return;
+    const before = panel.scrollTop;
+    panel.scrollTop = Math.max(0, Math.min(panel.scrollTop + dy, panel.scrollHeight - panel.clientHeight));
+    const changed = panel.scrollTop !== before;
+    if (changed) e.preventDefault();
+  }
+  window.addEventListener('wheel', onWheel, { passive: false });
+})();
+
+// ——— Align projects list top with paragraph (#out) ———
+(function alignProjectsToParagraph(){
+  const panel = document.getElementById('projectsPanel');
+  const out = document.getElementById('out');
+  if (!panel || !out) return;
+
+  function apply(){
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    const r = out.getBoundingClientRect();
+    if (isMobile) {
+      // Mobile positioning controlled by CSS: clear any JS offsets
+      panel.style.top = '';
+      panel.style.marginTop = '';
+      panel.style.transform = '';
+    } else if (!panel.classList.contains('thumbs')) {
+      panel.style.marginTop = '';
+      panel.style.top = Math.max(0, Math.round(r.top)) + 'px';
+    } else {
+      // Thumbnails mode on desktop: CSS controls top/transform/width
+      panel.style.top = '';
+      panel.style.marginTop = '';
+    }
+  }
+
+  // Run on ready and on resize
+  apply();
+  window.addEventListener('resize', apply);
+  // When typing completes, event is fired from basic.js
+  document.addEventListener('app:paragraph-ready', apply);
 })();
 
 // ——— Homepage: word-level scramble on hover for

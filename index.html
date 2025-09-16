@@ -6,14 +6,54 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Ziang Zhou</title>
+  <meta name="description" content="Ziang Zhou is a graphic designer based in San Francisco focusing on identity, interface, and creative technology projects.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://ziangzhou.com/">
+  <!-- Open Graph -->
+  <meta property="og:title" content="Ziang Zhou — Graphic Design, Creative Technology">
+  <meta property="og:description" content="Graphic designer in San Francisco working across identity, interface, and tools.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://ziangzhou.com/">
+  <meta property="og:image" content="https://ziangzhou.com/images/me.jpg">
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Ziang Zhou — Graphic Design, Creative Technology">
+  <meta name="twitter:description" content="Graphic designer in San Francisco working across identity, interface, and tools.">
+  <meta name="twitter:image" content="https://ziangzhou.com/images/me.jpg">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <!-- Structured Data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Person",
+        "name": "Ziang Zhou",
+        "alternateName": ["YNWU#MK4", "\u5468\u5b50\u6602"],
+        "jobTitle": "Graphic Designer",
+        "url": "https://ziangzhou.com/",
+        "image": "https://ziangzhou.com/images/me.jpg",
+        "address": {"@type":"PostalAddress","addressLocality":"San Francisco","addressRegion":"CA","addressCountry":"US"},
+        "sameAs": [
+          "https://www.instagram.com/ynwumk4/",
+          "https://www.linkedin.com/in/ziangz/"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "name": "Ziang Zhou",
+        "url": "https://ziangzhou.com/"
+      }
+    ]
+  }
+  </script>
   <link rel="stylesheet" href="styles/styles.css">
 </head>
 <body>
+<button id="viewToggle" class="chunk" type="button" aria-pressed="false" aria-label="Toggle view mode">◧ Thumbs</button>
+<h1 class="sr-only">Ziang Zhou — Graphic Design and Creative Technology in San Francisco</h1>
 
-<!-- /////////////////////////// -->
-<div id="sideGallery" aria-hidden="true">
-  <img id="sideImage" alt="">
-  </div>
+<!-- (hover gallery removed) -->
 
 <!-- /////////////////////////// -->
 <p id="source" aria-label="Intro paragraph">
@@ -27,9 +67,10 @@
   <br />
 
 <!-- /////////////////////////// -->
- <span class="chunk" data-key="identity" style="color:#9aa0a6; pointer-events:none;">Identity.</span>
-  <span class="chunk" data-key="interface" style="color:#9aa0a6; pointer-events:none;">Interface.</span>
-  <a class="chunk link" data-key="tool" href="tool.html">Tool.</a>
+ <span class="chunk filter" data-filter="Identity" data-key="identity" tabindex="0" role="button">Identity.</span>
+  <span class="chunk filter" data-filter="Interface" data-key="interface" tabindex="0" role="button">Interface.</span>
+  <span class="chunk filter" data-filter="Typography" data-key="typography" tabindex="0" role="button">Type.</span>
+  <a class="chunk filter link" data-filter="Tool" data-key="tool" href="tool.html" tabindex="0">Tool.</a>
   <br />
 
   <span class="chunk" data-key="about" style="color:#9aa0a6; pointer-events:none;">About.</span>
@@ -43,6 +84,52 @@
 
 <!-- /////////////////////////// -->
 <p id="out" aria-live="polite" aria-atomic="true"></p>
+
+<!-- /////////////////////////// -->
+<aside id="projectsPanel" aria-label="Projects list">
+  <div class="list" role="list">
+    <div class="proj" role="listitem" data-tags="Typography" data-year="2025" data-subtitle="Typeface Design" data-preview="images/pixyz/xxx.png">
+      <a class="title chunk link" href="projects/particle-painter.html">Pixyz</a>
+    </div>
+    <div class="proj" role="listitem" data-tags="Interface" data-year="2023" data-subtitle="Practice" data-preview="images/imogpt3/gpt3.jpg">
+      <a class="title chunk link" href="IMOGPT3.html">I.M.O.GPT-3</a>
+    </div>
+    <div class="proj" role="listitem" data-tags="Identity, Art Direction, Interface" data-year="2024 - Present" data-subtitle="Design Lead" data-preview="images/om/OpenMind_black.svg">
+      <a class="title chunk link" href="projects/noise-field.html">OpenMind</a>
+    </div>
+    <div class="proj" role="listitem" data-tags="Tool" data-year="2022" data-subtitle="Kinetic Typography" data-preview="images/interface/03.jpg">
+      <a class="title chunk link" href="projects/type-sine-waves.html">Fractile</a>
+    </div>
+    <div class="proj" role="listitem" data-tags="Identity" data-year="2024" data-subtitle="Brand System" data-preview="images/identity/01.jpg">
+      <a class="title chunk link" href="projects/monochrome-systems.html">Gateway, Freeway</a>
+    </div>
+    <div class="proj" role="listitem" data-tags="Tool" data-year="2025" data-subtitle="Case Study" data-preview="images/interface/04.jpg">
+      <a class="title chunk link" href="projects/signal-interface.html">GR1D</a>
+    </div>
+    <div class="proj" role="listitem" data-tags="Identity" data-year="2024 - 2025" data-subtitle="Founding team designer" data-preview="images/cudis/cudis.jpg">
+      <a class="title chunk link" href="projects/tactile-toolkit.html">CUDIS</a>
+    </div>
+    <div class="proj" role="listitem" data-tags="Interface" data-year="2023" data-subtitle="AI Interface Research" data-preview="images/interface/06.jpg">
+      <a class="title chunk link" href="projects/vector-atlas.html">ZIO</a>
+    </div>
+    <div class="proj" role="listitem" data-tags="Typography" data-year="2023" data-subtitle="Typeface Design" data-preview="images/mach/mach.png">
+      <a class="title chunk link" href="projects/vector-atlas.html">Mach</a>
+    </div>
+  </div>
+</aside>
+
+<!-- Centered preview for project hover -->
+<div id="projectPreview" aria-hidden="true"><img alt=""></div>
+<!-- Bottom-right meta for project hover (list view) -->
+<div id="projectMeta" aria-live="polite" aria-atomic="true"></div>
+<noscript>
+  <div class="noscript-content">
+    Ziang Zhou. Graphic Design. Creative Technology Synthesis. Based in San Francisco, CA. Identity. Interface. Tool.
+  </div>
+  <div class="noscript-content">
+    Projects: Particle Painter; Generative Grid; Noise Field; Type Sine Waves; Monochrome Systems; Signal Interface; Tactile Toolkit; Vector Atlas.
+  </div>
+  </noscript>
 
 <!-- /////////////////////////// -->
 <div id="mapTooltip" aria-hidden="true">
