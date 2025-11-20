@@ -415,7 +415,7 @@
   // (slogan sequence logic removed)
 })();
 
-// ——— Homepage projects: hover preview + tag filters ———
+// ——— Homepage projects: hover preview ———
 (function homeProjects() {
   const panel = document.getElementById('projectsPanel');
   const preview = document.getElementById('projectPreview');
@@ -549,41 +549,6 @@
     }
     requestAnimationFrame(frame);
   })();
-
-  // Filters: Identity / Interface / Tool at the top
-  const filters = Array.from(document.querySelectorAll('.filter[data-filter]'));
-  let active = null;
-
-  function applyFilter(tag) {
-    if (panel.classList.contains('thumbs')) return; // ignore filters in thumbnails mode
-    const t = (tag || '').trim();
-    panel.querySelectorAll('.proj').forEach(item => {
-      const tags = (item.getAttribute('data-tags') || '').split(',').map(s => s.trim().toLowerCase());
-      const match = !t || tags.includes(t.toLowerCase());
-      item.style.display = match ? 'block' : 'none';
-    });
-    filters.forEach(f => f.classList.toggle('active', f.getAttribute('data-filter') === t));
-  }
-
-  function toggleFilter(tag) {
-    if (active === tag) { active = null; applyFilter(null); }
-    else { active = tag; applyFilter(tag); }
-  }
-
-  filters.forEach(f => {
-    const tag = f.getAttribute('data-filter');
-    f.addEventListener('click', (e) => {
-      // If it's the Tool link, allow meta/ctrl click to navigate to tool.html
-      if (f.tagName.toLowerCase() === 'a') {
-        if (e.metaKey || e.ctrlKey) return; // allow open in new tab
-        e.preventDefault();
-      }
-      toggleFilter(tag);
-    });
-    f.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleFilter(tag); }
-    });
-  });
 
   // Clear preview when page/tab hidden
   document.addEventListener('visibilitychange', () => { if (document.hidden) hidePreview(); });

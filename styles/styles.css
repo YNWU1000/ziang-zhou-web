@@ -83,8 +83,11 @@ body.tool-page .chunk:hover {
   color: #00DA68;
 }
 
-/* Designer: loading cursor on hover (keep progress spinner) */
-.chunk[data-key="designer"]:hover { cursor: progress !important; }
+/* Designer + construction notice: loading cursor on hover */
+.chunk[data-key="designer"]:hover,
+.chunk[data-key="construction"]:hover {
+  cursor: progress !important;
+}
 
 /* Links without underline, inherit color */
 .link { text-decoration: none; color: inherit; }
@@ -293,9 +296,18 @@ body { isolation: isolate; }   /* prevents blending from leaking to the page roo
   text-align: right;
 }
 #projectsPanel .list { display: grid; gap: 0; }
-#projectsPanel .proj { display: block; }
+#projectsPanel .proj {
+  display: block;
+  opacity: 0.35;
+  pointer-events: none;
+}
 #projectsPanel .title { font-weight: 500; display: inline-block; }
 #projectsPanel .proj .chunk { cursor: default; }
+
+/* Temporary: gray out projects and disable interaction */
+#projectsPanel .proj a {
+  color: #9aa0a6;
+}
 /* no dividers between items */
 
 /* Centered preview on hover */
