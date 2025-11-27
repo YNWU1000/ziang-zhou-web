@@ -1,0 +1,2660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>RGB + Luma Dixer</title>
+
+  <!-- libs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.2/p5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-body: #ebebeb;
+      --bg-panel: #ebebeb;
+      --bg-card: #ffffff;
+      --border-soft: #d4d4d4;
+      --text-main: #646464;
+      --text-strong: #111111;
+      --text-muted: #9ca3af;
+      --accent-r: #ef4444;
+      --accent-g: #22c55e;
+      --accent-b: #3b82f6;
+      --accent-l: #f97316;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      font-family: "JetBrains Mono", monospace;
+      background: var(--bg-body);
+      color: var(--text-main);
+    }
+
+    /* Layout: left / center / right */
+
+    #layout {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr) 280px;
+      grid-template-rows: 100%;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    #left-panel,
+    #right-panel {
+      background: var(--bg-panel);
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 12px 14px 14px;
+    }
+
+    #left-panel {
+      border-right: 1px solid var(--border-soft);
+    }
+
+    #right-panel {
+      border-left: 1px solid var(--border-soft);
+    }
+
+    #center-panel {
+      position: relative;
+      background: #111827;
+      overflow: hidden;
+    }
+
+    #canvas-holder {
+      position: absolute;
+      inset: 0;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: transparent;
+    }
+
+    #no-image-hint {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: var(--text-muted);
+      pointer-events: none;
+      text-align: center;
+    }
+
+    #no-image-hint strong {
+      color: var(--text-strong);
+    }
+
+    /* General panel structure */
+
+    .section {
+      margin-bottom: 18px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .section-heading {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      color: #000;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .section-sub {
+      font-size: 9px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .section-play-btn {
+      white-space: nowrap;
+      padding: 5px 14px;
+      border-radius: 999px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border-radius: 8px;
+      border: 1px solid var(--border-soft);
+      padding: 8px 8px 10px;
+      box-sizing: border-box;
+    }
+
+    .section-body {
+      margin-top: 6px;
+    }
+
+    /* Header / title */
+
+    .plugin-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .plugin-name-block {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .plugin-name {
+      font-size: 11px;
+      color: #000;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-weight: 600;
+    }
+
+    .plugin-sub {
+      font-size: 9px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.13em;
+    }
+
+    .plugin-badge {
+      font-size: 9px;
+      color: #000;
+      padding: 3px 6px 4px;
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      background: #ffffff;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-weight: 600;
+    }
+
+    .header-controls-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 6px;
+    }
+
+    .header-controls-cta {
+      flex-direction: column;
+      align-items: stretch;
+      margin-top: 12px;
+      margin-bottom: 12px;
+      gap: 12px;
+    }
+
+    .source-label {
+      font-size: 9px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.13em;
+    }
+
+    .source-label span {
+      color: var(--text-strong);
+      margin-left: 4px;
+    }
+
+    button {
+      border: 0;
+      background: #ffffff;
+      color: var(--text-main);
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      padding: 6px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.12s, color 0.12s, border-color 0.12s;
+      border: 1px solid var(--border-soft);
+      box-sizing: border-box;
+    }
+
+    button:hover {
+      background: #d0e1ff;
+      color: #000;
+      border-color: #94a3b8;
+    }
+
+    button.primary {
+      background: #000;
+      color: #fff;
+      border-color: #000;
+    }
+
+    button.primary:hover {
+      background: #333;
+    }
+
+    .small-button {
+      padding: 5px 8px;
+      border-radius: 999px;
+    }
+
+    .upload-button {
+      width: 100%;
+      padding: 9px 16px;
+      font-size: 10px;
+      text-align: center;
+    }
+
+    .small-button.primary-toggle {
+      background: #16a34a;
+      border-color: #16a34a;
+      color: #ffffff;
+    }
+
+    .small-button.primary-toggle.paused {
+      background: #ffffff;
+      border-color: var(--border-soft);
+      color: var(--text-main);
+    }
+
+    /* Mode toggle */
+
+    .mode-toggle {
+      display: inline-flex;
+      border-radius: 999px;
+      background: #ffffff;
+      border: 1px solid var(--border-soft);
+      overflow: hidden;
+      width: 100%;
+    }
+
+    .mode-btn {
+      border: 0;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 9px;
+      padding: 6px 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.13em;
+      cursor: pointer;
+      flex: 1;
+      text-align: center;
+    }
+
+    .mode-btn.active {
+      background: #000;
+      color: #ffffff;
+    }
+
+    /* Param blocks */
+
+    .param-group {
+      margin-bottom: 8px;
+    }
+
+    .param-label {
+      font-size: 9px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .param-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    input[type="number"],
+    select {
+      width: 100%;
+      background: #ffffff;
+      border: 1px solid var(--border-soft);
+      color: #000;
+      font-size: 10px;
+      padding: 5px 6px;
+      font-weight: 600;
+      box-sizing: border-box;
+    }
+
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    select {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+      background-position: right 6px center;
+      background-repeat: no-repeat;
+      background-size: 14px;
+      padding-right: 22px;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      appearance: none;
+      height: 3px;
+      background: #dddddd;
+      outline: none;
+      border-radius: 3px;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      width: 10px;
+      height: 10px;
+      background: #000000;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 10px;
+      height: 10px;
+      background: #000000;
+      cursor: pointer;
+      border: none;
+    }
+
+    .mini-text {
+      font-size: 8px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Knobs – flat with clear indicator */
+
+    .knob-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .knob {
+      width: 60px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      user-select: none;
+      cursor: ns-resize;
+      position: relative;
+    }
+
+    .knob-dial {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 1px solid var(--border-soft);
+      position: relative;
+    }
+
+    .knob-dial::after {
+      content: "";
+      position: absolute;
+      inset: 7px;
+      border-radius: 50%;
+      border: 1px solid #e5e7eb;
+      background: #ffffff;
+    }
+
+    .knob-indicator {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 2px;
+      height: 13px;
+      background: #111827;
+      transform-origin: 50% 85%;
+      transform: translate(-50%, -85%) rotate(0deg);
+      border-radius: 999px;
+    }
+
+    .knob-label {
+      font-size: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.13em;
+      color: var(--text-muted);
+    }
+
+    .knob-readout {
+      font-size: 9px;
+      padding: 2px 6px 3px;
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      background: #ffffff;
+      color: #000;
+      min-width: 32px;
+      text-align: center;
+      box-sizing: border-box;
+    }
+
+    /* Basic / Advanced visibility */
+
+    .advanced-only {
+      display: none;
+    }
+
+    body.advanced-on .advanced-flex {
+      display: flex;
+    }
+
+    body.advanced-on .advanced-block {
+      display: block;
+    }
+
+    /* Master & export */
+
+    .export-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .export-btn {
+      flex: 1;
+    }
+
+    .status-line {
+      font-size: 8px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      min-height: 10px;
+    }
+
+    /* Background toggle */
+
+    .bg-toggle {
+      display: inline-flex;
+      border-radius: 999px;
+      background: #ffffff;
+      border: 1px solid var(--border-soft);
+      overflow: hidden;
+      width: 100%;
+    }
+
+    .bg-btn {
+      border: 0;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 9px;
+      padding: 6px 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.13em;
+      cursor: pointer;
+      flex: 1;
+      text-align: center;
+    }
+
+    .bg-btn.active {
+      background: #000000;
+      color: #ffffff;
+    }
+
+    .reverse-button {
+      width: 100%;
+      margin-top: 6px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      letter-spacing: 0.12em;
+    }
+
+    .reverse-button.active {
+      background: #000;
+      color: #fff;
+      border-color: #000;
+    }
+
+    /* Channel strips */
+
+    .channel-strip {
+      background: var(--bg-card);
+      border-radius: 8px;
+      border: 1px solid var(--border-soft);
+      padding: 8px 8px 10px;
+      margin-bottom: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      box-sizing: border-box;
+    }
+
+    .channel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2px;
+    }
+
+    .channel-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .channel-pill {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      padding: 3px 7px 4px;
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      background: #ffffff;
+    }
+
+    body.animation-mode-on .knob {
+      cursor: pointer;
+    }
+
+    body.animation-mode-on .knob:hover .knob-dial {
+      border-color: #818cf8;
+      box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.35);
+    }
+
+    .knob.is-anim-target .knob-dial {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.25);
+    }
+
+    .knob.is-anim-target .knob-label {
+      color: #4f46e5;
+    }
+
+    .knob.is-anim-target .knob-readout {
+      border-color: #6366f1;
+      color: #1f2937;
+    }
+
+    .knob.is-anim-target::after {
+      content: "◉";
+      position: absolute;
+      top: -3px;
+      right: -2px;
+      font-size: 9px;
+      color: #4f46e5;
+      pointer-events: none;
+    }
+
+    .anim-mode-toggle {
+      width: 100%;
+      border: 1px solid var(--border-soft);
+      background: #ffffff;
+      padding: 6px 10px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+
+    .anim-mode-toggle.active {
+      background: #eef2ff;
+      border-color: #6366f1;
+      color: #4338ca;
+    }
+
+    body.animation-mode-on .anim-mode-toggle {
+      box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.4);
+    }
+
+    .channel-pill.R { border-color: var(--accent-r); color: var(--accent-r); }
+    .channel-pill.G { border-color: var(--accent-g); color: var(--accent-g); }
+    .channel-pill.B { border-color: var(--accent-b); color: var(--accent-b); }
+    .channel-pill.L { border-color: var(--accent-l); color: var(--accent-l); }
+
+    .channel-name {
+      font-size: 9px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.11em;
+    }
+
+    .channel-switches {
+      display: flex;
+      gap: 4px;
+    }
+
+    .toggle-btn {
+      min-width: 22px;
+      padding: 2px 0 3px;
+      border-radius: 4px;
+      border: 1px solid var(--border-soft);
+      background: #ffffff;
+      color: var(--text-muted);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.13em;
+      cursor: pointer;
+    }
+
+    .toggle-btn.is-on {
+      background: #22c55e;
+      border-color: #22c55e;
+      color: #022c22;
+    }
+
+    .toggle-btn.is-solo {
+      background: #f97316;
+      border-color: #f97316;
+      color: #111827;
+    }
+
+    .toggle-btn.is-muted {
+      background: #f3f4f6;
+      border-color: #d1d5db;
+      color: #9ca3af;
+      opacity: 0.8;
+    }
+
+    .strip-label {
+      font-size: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Shape icons */
+
+    .shape-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 4px;
+      margin-bottom: 4px;
+    }
+
+    .shape-icon-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      border: 1px solid var(--border-soft);
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #9ca3af;
+      padding: 0;
+    }
+
+    .shape-icon-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .shape-icon-btn.active {
+      background: #111827;
+      color: #ffffff;
+      border-color: #111827;
+    }
+
+    /* Channel color swatch (advanced) */
+
+    .channel-color {
+      width: 100%;
+      margin-top: 4px;
+    }
+
+    .channel-color input[type="color"] {
+      width: 100%;
+      height: 26px;
+      border: 1px solid var(--border-soft);
+      padding: 0;
+      box-sizing: border-box;
+      background: #ffffff;
+    }
+
+    /* Small layout tweaks */
+
+    @media (max-width: 960px) {
+      #layout {
+        grid-template-columns: 220px minmax(0, 1fr) 260px;
+      }
+    }
+  </style>
+</head>
+<body class="basic-mode">
+
+  <div id="layout">
+    <!-- LEFT: Master + Animation + Export -->
+    <div id="left-panel">
+      <div class="section">
+        <div class="card">
+          <div class="plugin-title-row">
+            <div class="plugin-name-block">
+              <div class="plugin-name">RGB Dixer</div>
+              <div class="plugin-sub">RGB + Luma dither bus</div>
+            </div>
+            <div class="plugin-badge">v0.9</div>
+          </div>
+
+          <div class="header-controls-row">
+            <div class="source-label">
+              Source:
+              <span id="sourceName">none</span>
+            </div>
+          </div>
+
+          <div class="header-controls-row header-controls-cta">
+            <button id="btnLoadImage" class="small-button upload-button">⬆ Image</button>
+
+            <div class="mode-toggle">
+              <button id="modeBasic" class="mode-btn active">Basic</button>
+              <button id="modeAdvanced" class="mode-btn">Advanced</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MASTER -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">Master</div>
+          <div class="section-sub">Global bus</div>
+        </div>
+        <div class="card">
+          <div class="section-body">
+            <div class="param-group">
+              <div class="param-label">Basic</div>
+              <div class="knob-row">
+                <div class="knob"
+                     data-channel="global"
+                     data-param="masterMix"
+                     data-min="0"
+                     data-max="1"
+                     data-step="0.01"
+                     data-format="percent">
+                  <div class="knob-dial"><div class="knob-indicator"></div></div>
+                  <div class="knob-label">Mix</div>
+                  <div class="knob-readout"></div>
+                </div>
+
+                <div class="knob"
+                     data-channel="global"
+                     data-param="cellSize"
+                     data-min="4"
+                     data-max="48"
+                     data-step="1"
+                     data-format="int">
+                  <div class="knob-dial"><div class="knob-indicator"></div></div>
+                  <div class="knob-label">Cell</div>
+                  <div class="knob-readout"></div>
+                </div>
+
+                <div class="knob"
+                     data-channel="global"
+                     data-param="brightness"
+                     data-min="-0.5"
+                     data-max="0.5"
+                     data-step="0.01"
+                     data-format="signed0.2">
+                  <div class="knob-dial"><div class="knob-indicator"></div></div>
+                  <div class="knob-label">Bright</div>
+                  <div class="knob-readout"></div>
+                </div>
+
+                <div class="knob"
+                     data-channel="global"
+                     data-param="contrast"
+                     data-min="0.5"
+                     data-max="1.5"
+                     data-step="0.01"
+                     data-format="1.2">
+                  <div class="knob-dial"><div class="knob-indicator"></div></div>
+                  <div class="knob-label">Contrast</div>
+                  <div class="knob-readout"></div>
+                </div>
+                <div class="knob"
+                     data-channel="global"
+                     data-param="levels"
+                     data-min="2"
+                     data-max="8"
+                     data-step="1"
+                     data-format="int">
+                  <div class="knob-dial"><div class="knob-indicator"></div></div>
+                  <div class="knob-label">Levels</div>
+                  <div class="knob-readout"></div>
+                </div>
+                <div class="knob"
+                     data-channel="global"
+                     data-param="gamma"
+                     data-min="0.4"
+                     data-max="2.4"
+                     data-step="0.01"
+                     data-format="1.2">
+                  <div class="knob-dial"><div class="knob-indicator"></div></div>
+                  <div class="knob-label">Gamma</div>
+                  <div class="knob-readout"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="param-group">
+              <div class="param-label">Background</div>
+              <div class="bg-toggle" id="bgToggle">
+                <button class="bg-btn active" data-bg="white">White</button>
+                <button class="bg-btn" data-bg="black">Black</button>
+                <button class="bg-btn" data-bg="transparent">Transp</button>
+              </div>
+            </div>
+
+            <div class="param-group">
+              
+              <button id="btnReverseColors" class="small-button reverse-button">Reverse Colors: OFF</button>
+            </div>
+
+            <div class="param-group advanced-only advanced-block">
+              <div class="param-label">Dither mode</div>
+              <select id="modeSelect">
+                <option value="ordered">Ordered (Bayer)</option>
+                <option value="halftone">Halftone</option>
+                <option value="random">Random</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ANIMATION -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">ANIMATION</div>
+          <div class="section-sub">GIF PLAYBACK</div>
+        </div>
+        <div class="card">
+          <div class="section-body">
+            <div class="param-group">
+              <div class="param-label">Control</div>
+              <div class="knob-row">
+                <div class="knob"
+                     data-channel="global"
+                     data-param="animSpeed"
+                     data-min="0"
+                     data-max="3"
+                     data-step="0.01"
+                     data-format="1.2">
+                  <div class="knob-dial"><div class="knob-indicator"></div></div>
+                  <div class="knob-label">Speed</div>
+                  <div class="knob-readout"></div>
+                </div>
+                <div class="knob"
+                     data-channel="global"
+                     data-param="fps"
+                     data-min="6"
+                     data-max="60"
+                     data-step="1"
+                     data-format="int">
+                  <div class="knob-dial"><div class="knob-indicator"></div></div>
+                  <div class="knob-label">FPS</div>
+                  <div class="knob-readout"></div>
+                </div>
+                <div class="knob"
+                     data-channel="global"
+                     data-param="gifSeconds"
+                     data-min="0.5"
+                     data-max="5"
+                     data-step="0.1"
+                     data-format="1.1">
+                  <div class="knob-dial"><div class="knob-indicator"></div></div>
+                  <div class="knob-label">GIF length</div>
+                  <div class="knob-readout"></div>
+                </div>
+              </div>
+            </div>
+            <div class="param-group">
+              <div class="param-label">Automation Mode</div>
+              <button id="toggleAnimMode" class="anim-mode-toggle">Automation Mode: OFF</button>
+              <div class="mini-text">When enabled, hover + click knobs to flag them for animation.</div>
+            </div>
+          <button id="playPause" class="anim-mode-toggle">▶ Play</button>
+        </div>
+            </div>
+      </div>
+
+      <!-- EXPORT -->
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">Export</div>
+          <div class="section-sub">PNG + GIF</div>
+        </div>
+        <div class="card">
+          <div class="section-body">
+            <div class="param-group">
+              <div class="param-label">Resolution</div>
+              <select id="exportScale">
+                <option value="1">1×</option>
+                <option value="2" selected>2×</option>
+                <option value="4">4×</option>
+              </select>
+              <div class="mini-text">Higher scales render & export at larger internal resolution.</div>
+            </div>
+
+
+            <div class="export-row">
+              <button id="btnExportPNG" class="anim-mode-toggle">PNG</button>
+              <button id="btnExportGIF" class="anim-mode-toggle">GIF</button>
+            </div>
+
+            <div class="mini-text advanced-only advanced-block">
+              GIF export uses current Anim speed & FPS; animation can be static (Speed = 0).
+              Transparent BG is preserved in PNG; GIF uses a single transparent color key.
+            </div>
+            <div id="status" class="status-line"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTER: canvas -->
+    <div id="center-panel">
+      <div id="canvas-holder"></div>
+      <div id="no-image-hint">
+        <strong>Load an image</strong><br/>to start dither mixing
+      </div>
+    </div>
+
+    <!-- RIGHT: R / G / B / L channels -->
+    <div id="right-panel">
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">Channels</div>
+          <div class="section-sub">R + G + B + Luma</div>
+        </div>
+      </div>
+
+      <!-- R -->
+      <div class="channel-strip" data-channel-strip="R">
+        <div class="channel-header">
+          <div class="channel-title">
+            <div class="channel-pill R">R</div>
+            <div class="channel-name">Red layer</div>
+          </div>
+          <div class="channel-switches">
+            <button class="toggle-btn is-on" data-channel="R" data-toggle="enabled">On</button>
+            <button class="toggle-btn" data-channel="R" data-toggle="solo">S</button>
+            <button class="toggle-btn" data-channel="R" data-toggle="mute">M</button>
+          </div>
+        </div>
+
+        <div class="strip-label">Basic</div>
+
+        <div class="shape-row" data-shape-row="R">
+          <button class="shape-icon-btn" data-channel="R" data-shape="circle" aria-label="Circle">
+            <svg viewBox="0 0 18 18"><circle cx="9" cy="9" r="5" fill="currentColor"/></svg>
+          </button>
+          <button class="shape-icon-btn" data-channel="R" data-shape="square" aria-label="Square">
+            <svg viewBox="0 0 18 18"><rect x="4" y="4" width="10" height="10" fill="currentColor"/></svg>
+          </button>
+          <button class="shape-icon-btn" data-channel="R" data-shape="triangle" aria-label="Triangle">
+            <svg viewBox="0 0 18 18"><polygon points="9,4 14,14 4,14" fill="currentColor"/></svg>
+          </button>
+          <button class="shape-icon-btn" data-channel="R" data-shape="diamond" aria-label="Diamond">
+            <svg viewBox="0 0 18 18"><polygon points="9,3 15,9 9,15 3,9" fill="currentColor"/></svg>
+          </button>
+          <button class="shape-icon-btn" data-channel="R" data-shape="line" aria-label="Line">
+            <svg viewBox="0 0 18 18"><rect x="3" y="8" width="12" height="2" fill="currentColor"/></svg>
+          </button>
+          <button class="shape-icon-btn" data-channel="R" data-shape="plus" aria-label="Plus">
+            <svg viewBox="0 0 18 18">
+              <rect x="3" y="8" width="12" height="2" fill="currentColor"/>
+              <rect x="8" y="3" width="2" height="12" fill="currentColor"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="param-group">
+          <div class="param-label">Blend</div>
+          <select id="R_blend">
+            <option value="MULTIPLY">Multiply</option>
+            <option value="SCREEN">Screen</option>
+            <option value="OVERLAY">Overlay</option>
+            <option value="ADD">Add</option>
+            <option value="DIFFERENCE">Difference</option>
+            <option value="LIGHTEST">Lightest</option>
+            <option value="DARKEST">Darkest</option>
+          </select>
+        </div>
+
+        <div class="knob-row">
+          <div class="knob"
+               data-channel="R"
+               data-param="gain"
+               data-min="0"
+               data-max="2"
+               data-step="0.01"
+               data-format="1.2">
+            <div class="knob-dial"><div class="knob-indicator"></div></div>
+            <div class="knob-label">Gain</div>
+            <div class="knob-readout"></div>
+          </div>
+
+          <div class="knob"
+               data-channel="R"
+               data-param="scale"
+               data-min="0.3"
+               data-max="2"
+               data-step="0.01"
+               data-format="1.2">
+            <div class="knob-dial"><div class="knob-indicator"></div></div>
+            <div class="knob-label">Scale</div>
+            <div class="knob-readout"></div>
+          </div>
+
+          <div class="knob"
+               data-channel="R"
+               data-param="noise"
+               data-min="0"
+               data-max="1"
+               data-step="0.01"
+               data-format="percent">
+            <div class="knob-dial"><div class="knob-indicator"></div></div>
+            <div class="knob-label">Noise</div>
+            <div class="knob-readout"></div>
+          </div>
+        </div>
+
+        <div class="strip-label advanced-only advanced-block">Advanced</div>
+        <div class="knob-row advanced-only advanced-flex">
+          <div class="knob"
+               data-channel="R"
+               data-param="threshold"
+               data-min="-0.5"
+               data-max="0.5"
+               data-step="0.01"
+               data-format="signed0.2">
+            <div class="knob-dial"><div class="knob-indicator"></div></div>
+            <div class="knob-label">Thresh</div>
+            <div class="knob-readout"></div>
+          </div>
+
+          <div class="knob"
+               data-channel="R"
+               data-param="angle"
+               data-min="-45"
+               data-max="45"
+               data-step="1"
+               data-format="int">
+            <div class="knob-dial"><div class="knob-indicator"></div></div>
+            <div class="knob-label">Angle</div>
+            <div class="knob-readout"></div>
+          </div>
+        </div>
+
+        <div class="advanced-only advanced-block">
+          <div class="param-group">
+            <div class="param-label">Source</div>
+            <select id="R_source">
+              <option value="R">R channel</option>
+              <option value="G">G channel</option>
+              <option value="B">B channel</option>
+              <option value="L">Luma</option>
+            </select>
+          </div>
+          <div class="param-group channel-color">
+            <input type="color" id="R_color" value="#ff3366" />
+          </div>
+        </div>
+      </div>
+
+      <!-- G -->
+      <div class="channel-strip" data-channel-strip="G">
+        <div class="channel-header">
+          <div class="channel-title">
+            <div class="channel-pill G">G</div>
+            <div class="channel-name">Green layer</div>
+          </div>
+          <div class="channel-switches">
+            <button class="toggle-btn is-on" data-channel="G" data-toggle="enabled">On</button>
+            <button class="toggle-btn" data-channel="G" data-toggle="solo">S</button>
+            <button class="toggle-btn" data-channel="G" data-toggle="mute">M</button>
+          </div>
+        </div>
+
+        <div class="strip-label">Basic</div>
+
+        <div class="shape-row" data-shape-row="G">
+          <button class="shape-icon-btn" data-channel="G" data-shape="circle" aria-label="Circle">
+            <svg viewBox="0 0 18 18"><circle cx="9" cy="9" r="5" fill="currentColor"/></svg>
+          </button>
+          <button class="shape-icon-btn" data-channel="G" data-shape="square" aria-label="Square">
+            <svg viewBox="0 0 18 18"><rect x="4" y="4" width="10" height="10" fill="currentColor"/></svg>
+          </button>
+          <button class="shape-icon-btn" data-channel="G" data-shape="triangle" aria-label="Triangle">
+            <svg viewBox="0 0 18 18"><polygon points="9,4 14,14 4,14" fill="currentColor"/></svg>
+          </button>
+          <button class="shape-icon-btn" data-channel="G" data-shape="diamond" aria-label="Diamond">
+            <svg viewBox="0 0 18 18"><polygon points="9,3 15,9 9,15 3,9" fill="currentColor"/></svg>
+          </button>
+          <button class="shape-icon-btn" data-channel="G" data-shape="line" aria-label="Line">
+            <svg viewBox="0 0 18 18"><rect x="3" y="8" width="12" height="2" fill="currentColor"/></svg>
+          </button>
+          <button class="shape-icon-btn" data-channel="G" data-shape="plus" aria-label="Plus">
+            <svg viewBox="0 0 18 18">
+              <rect x="3" y="8" width="12" height="2" fill="currentColor"/>
+              <rect x="8" y="3" width="2" height="12" fill="currentColor"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="param-group">
+          <div class="param-label">Blend</div>
+          <select id="G_blend">
+            <option value="SCREEN">Screen</option>
+            <option value="MULTIPLY">Multiply</option>
+            <option value="OVERLAY">Overlay</option>
+            <option value="ADD">Add</option>
+            <option value="DIFFERENCE">Difference</option>
+            <option value="LIGHTEST">Lightest</option>
+            <option value="DARKEST">Darkest</option>
+          </select>
+        </div>
+
+        <div class="knob-row">
+          <div class="knob"
+               data-channel="G"
+               data-param="gain"
+               data-min="0"
+               data-max="2"
+               data-step="0.01"
+               data-format="1.2">
+            <div class="knob-dial"><div class="knob-indicator"></div></div>
+            <div class="knob-label">Gain</div>
+            <div class="knob-readout"></div>
+          </div>
+
+          <div class="knob"
+               data-channel="G"
+               data-param="scale"
+               data-min="0.3"
+               data-max="2"
+               data-step="0.01"
+               data-format="1.2">
+            <div class="knob-dial"><div class="knob-indicator"></div></div>
+            <div class="knob-label">Scale</div>
+            <div class="knob-readout"></div>
+          </div>
+
+          <div class="knob"
+               data-channel="G"
+               data-param="noise"
+               data-min="0"
+               data-max="1"
+               data-step="0.01"
+               data-format="percent">
+            <div class="knob-dial"><div class="knob-indicator"></div></div>
+            <div class="knob-label">Noise</div>
+            <div class="knob-readout"></div>
+          </div>
+        </div>
+
+        <div class="strip-label advanced-only advanced-block">Advanced</div>
+        <div class="knob-row advanced-only advanced-flex">
+          <div class="knob"
+               data-channel="G"
+               data-param="threshold"
+               data-min="-0.5"
+               data-max="0.5"
+               data-step="0.01"
+               data-format="signed0.2">
+            <div class="knob-dial"><div class="knob-indicator"></div></div>
+            <div class="knob-label">Thresh</div>
+            <div class="knob-readout"></div>
+          </div>
+
+          <div class="knob"
+               data-channel="G"
+               data-param="angle"
+               data-min="-45"
+               data-max="45"
+               data-step="1"
+               data-format="int">
+            <div class="knob-dial"><div class="knob-indicator"></div></div>
+            <div class="knob-label">Angle</div>
+            <div class="knob-readout"></div>
+          </div>
+        </div>
+
+        <div class="advanced-only advanced-block">
+          <div class="param-group">
+            <div class="param-label">Source</div>
+            <select id="G_source">
+              <option value="G">G channel</option>
+              <option value="R">R channel</option>
+              <option value="B">B channel</option>
+              <option value="L">Luma</option>
+            </select>
+          </div>
+          <div class="param-group channel-color">
+            <input type="color" id="G_color" value="#22c55e" />
+          </div>
+        </div>
+      </div>
+
+      <!-- B -->
+      <div class="channel-strip" data-channel-strip="B">
+        <div class="channel-header">
+          <div class="channel-title">
+            <div class="channel-pill B">B</div>
+            <div class="channel-name">Blue layer</div>
+          </div>
+          <div class="channel-switches">
+            <button class="toggle-btn is-on" data-channel="B" data-toggle="enabled">On</button>
+            <button class="toggle-btn" data-channel="B" data-toggle="solo">S</button>
+            <button class="toggle-btn" data-channel="B" data-toggle="mute">M</button>
+          </div>
+        </div>
+
+        <div class="strip-label">Basic</div>
+
+        <div class="shape-row" data-shape-row="B">
+          <button class="shape-icon-btn" data-channel="B" data-shape="circle" aria-label="Circle">
+            <svg viewBox="0 0 18 18"><circle cx="9" cy="9" r="5" fill="currentColor"/></svg>
+          </button>
+          <button class="shape-icon-btn" data-channel="B" data-shape="square" aria-label="Square">
+            <svg viewBox="0 0 18 18"><rect x="4" y="4" width="10" height="10" fill="currentColor"/></svg>
+          </button>
+          <button class="shape-icon-btn" data-channel="B" data-shape="triangle" aria-label="Triangle">
+            <svg viewBox="0 0 18 18"><polygon points="9,4 14,14 4,14" fill="currentColor"/></svg>
+          </button>
+          <button class="shape-icon-btn" data-channel="B" data-shape="diamond" aria-label="Diamond">
+            <svg viewBox="0 0 18 18"><polygon points="9,3 15,9 9,15 3,9" fill="currentColor"/></svg>
+          </button>
+          <button class="shape-icon-btn" data-channel="B" data-shape="line" aria-label="Line">
+            <svg viewBox="0 0 18 18"><rect x="3" y="8" width="12" height="2" fill="currentColor"/></svg>
+          </button>
+          <button class="shape-icon-btn" data-channel="B" data-shape="plus" aria-label="Plus">
+            <svg viewBox="0 0 18 18">
+              <rect x="3" y="8" width="12" height="2" fill="currentColor"/>
+              <rect x="8" y="3" width="2" height="12" fill="currentColor"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="param-group">
+          <div class="param-label">Blend</div>
+          <select id="B_blend">
+            <option value="LIGHTEST">Lightest</option>
+            <option value="SCREEN">Screen</option>
+            <option value="MULTIPLY">Multiply</option>
+            <option value="OVERLAY">Overlay</option>
+            <option value="ADD">Add</option>
+            <option value="DIFFERENCE">Difference</option>
+            <option value="DARKEST">Darkest</option>
+          </select>
+        </div>
+
+        <div class="knob-row">
+          <div class="knob"
+               data-channel="B"
+               data-param="gain"
+               data-min="0"
+               data-max="2"
+               data-step="0.01"
+               data-format="1.2">
+            <div class="knob-dial"><div class="knob-indicator"></div></div>
+            <div class="knob-label">Gain</div>
+            <div class="knob-readout"></div>
+          </div>
+
+          <div class="knob"
+               data-channel="B"
+               data-param="scale"
+               data-min="0.3"
+               data-max="2"
+               data-step="0.01"
+               data-format="1.2">
+            <div class="knob-dial"><div class="knob-indicator"></div></div>
+            <div class="knob-label">Scale</div>
+            <div class="knob-readout"></div>
+          </div>
+
+          <div class="knob"
+               data-channel="B"
+               data-param="noise"
+               data-min="0"
+               data-max="1"
+               data-step="0.01"
+               data-format="percent">
+            <div class="knob-dial"><div class="knob-indicator"></div></div>
+            <div class="knob-label">Noise</div>
+            <div class="knob-readout"></div>
+          </div>
+        </div>
+
+        <div class="strip-label advanced-only advanced-block">Advanced</div>
+        <div class="knob-row advanced-only advanced-flex">
+          <div class="knob"
+               data-channel="B"
+               data-param="threshold"
+               data-min="-0.5"
+               data-max="0.5"
+               data-step="0.01"
+               data-format="signed0.2">
+            <div class="knob-dial"><div class="knob-indicator"></div></div>
+            <div class="knob-label">Thresh</div>
+            <div class="knob-readout"></div>
+          </div>
+
+          <div class="knob"
+               data-channel="B"
+               data-param="angle"
+               data-min="-45"
+               data-max="45"
+               data-step="1"
+               data-format="int">
+            <div class="knob-dial"><div class="knob-indicator"></div></div>
+            <div class="knob-label">Angle</div>
+            <div class="knob-readout"></div>
+          </div>
+        </div>
+
+        <div class="advanced-only advanced-block">
+          <div class="param-group">
+            <div class="param-label">Source</div>
+            <select id="B_source">
+              <option value="B">B channel</option>
+              <option value="R">R channel</option>
+              <option value="G">G channel</option>
+              <option value="L">Luma</option>
+            </select>
+          </div>
+          <div class="param-group channel-color">
+            <input type="color" id="B_color" value="#60a5fa" />
+          </div>
+        </div>
+      </div>
+
+      <!-- LUMA -->
+      <div class="channel-strip" data-channel-strip="L">
+        <div class="channel-header">
+          <div class="channel-title">
+            <div class="channel-pill L">L</div>
+            <div class="channel-name">Luma layer</div>
+          </div>
+          <div class="channel-switches">
+            <button class="toggle-btn is-on" data-channel="L" data-toggle="enabled">On</button>
+            <button class="toggle-btn" data-channel="L" data-toggle="solo">S</button>
+            <button class="toggle-btn" data-channel="L" data-toggle="mute">M</button>
+          </div>
+        </div>
+
+        <div class="strip-label">Basic</div>
+
+        <div class="shape-row" data-shape-row="L">
+          <button class="shape-icon-btn" data-channel="L" data-shape="circle" aria-label="Circle">
+            <svg viewBox="0 0 18 18"><circle cx="9" cy="9" r="5" fill="currentColor"/></svg>
+          </button>
+          <button class="shape-icon-btn" data-channel="L" data-shape="square" aria-label="Square">
+            <svg viewBox="0 0 18 18"><rect x="4" y="4" width="10" height="10" fill="currentColor"/></svg>
+          </button>
+          <button class="shape-icon-btn" data-channel="L" data-shape="triangle" aria-label="Triangle">
+            <svg viewBox="0 0 18 18"><polygon points="9,4 14,14 4,14" fill="currentColor"/></svg>
+          </button>
+          <button class="shape-icon-btn" data-channel="L" data-shape="diamond" aria-label="Diamond">
+            <svg viewBox="0 0 18 18"><polygon points="9,3 15,9 9,15 3,9" fill="currentColor"/></svg>
+          </button>
+          <button class="shape-icon-btn" data-channel="L" data-shape="line" aria-label="Line">
+            <svg viewBox="0 0 18 18"><rect x="3" y="8" width="12" height="2" fill="currentColor"/></svg>
+          </button>
+          <button class="shape-icon-btn" data-channel="L" data-shape="plus" aria-label="Plus">
+            <svg viewBox="0 0 18 18">
+              <rect x="3" y="8" width="12" height="2" fill="currentColor"/>
+              <rect x="8" y="3" width="2" height="12" fill="currentColor"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="param-group">
+          <div class="param-label">Blend</div>
+          <select id="L_blend">
+            <option value="OVERLAY">Overlay</option>
+            <option value="MULTIPLY">Multiply</option>
+            <option value="SCREEN">Screen</option>
+            <option value="ADD">Add</option>
+            <option value="DIFFERENCE">Difference</option>
+            <option value="LIGHTEST">Lightest</option>
+            <option value="DARKEST">Darkest</option>
+          </select>
+        </div>
+
+        <div class="knob-row">
+          <div class="knob"
+               data-channel="L"
+               data-param="gain"
+               data-min="0"
+               data-max="2"
+               data-step="0.01"
+               data-format="1.2">
+            <div class="knob-dial"><div class="knob-indicator"></div></div>
+            <div class="knob-label">Gain</div>
+            <div class="knob-readout"></div>
+          </div>
+
+          <div class="knob"
+               data-channel="L"
+               data-param="scale"
+               data-min="0.3"
+               data-max="2"
+               data-step="0.01"
+               data-format="1.2">
+            <div class="knob-dial"><div class="knob-indicator"></div></div>
+            <div class="knob-label">Scale</div>
+            <div class="knob-readout"></div>
+          </div>
+
+          <div class="knob"
+               data-channel="L"
+               data-param="noise"
+               data-min="0"
+               data-max="1"
+               data-step="0.01"
+               data-format="percent">
+            <div class="knob-dial"><div class="knob-indicator"></div></div>
+            <div class="knob-label">Noise</div>
+            <div class="knob-readout"></div>
+          </div>
+        </div>
+
+        <div class="strip-label advanced-only advanced-block">Advanced</div>
+        <div class="knob-row advanced-only advanced-flex">
+          <div class="knob"
+               data-channel="L"
+               data-param="threshold"
+               data-min="-0.5"
+               data-max="0.5"
+               data-step="0.01"
+               data-format="signed0.2">
+            <div class="knob-dial"><div class="knob-indicator"></div></div>
+            <div class="knob-label">Thresh</div>
+            <div class="knob-readout"></div>
+          </div>
+
+          <div class="knob"
+               data-channel="L"
+               data-param="angle"
+               data-min="-45"
+               data-max="45"
+               data-step="1"
+               data-format="int">
+            <div class="knob-dial"><div class="knob-indicator"></div></div>
+            <div class="knob-label">Angle</div>
+            <div class="knob-readout"></div>
+          </div>
+        </div>
+
+        <div class="advanced-only advanced-block">
+          <div class="param-group">
+            <div class="param-label">Source</div>
+            <select id="L_source">
+              <option value="L">Luma</option>
+              <option value="R">R channel</option>
+              <option value="G">G channel</option>
+              <option value="B">B channel</option>
+            </select>
+          </div>
+          <div class="param-group channel-color">
+            <input type="color" id="L_color" value="#facc15" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden file input -->
+  <input id="imageInput" type="file" accept="image/*" style="display:none" />
+
+  <script>
+    // ====== CONSTANTS ======
+    const PREVIEW_PADDING = 12;
+
+    const BAYER4 = [
+      [0, 8, 2, 10],
+      [12, 4, 14, 6],
+      [3, 11, 1, 9],
+      [15, 7, 13, 5]
+    ];
+
+    const channelSeeds = {
+      R: { x: 23.13, y: 91.77 },
+      G: { x: 12.54, y: 63.29 },
+      B: { x: 71.02, y: 19.44 },
+      L: { x: 5.11,  y: 47.92 }
+    };
+
+    // ====== GLOBAL STATE ======
+    let mainCanvas;
+    let img = null;
+    let imgName = null;
+
+    const globalParams = {
+      masterMix: 1.0,
+      cellSize: 10,
+      brightness: 0.0,
+      contrast: 1.0,
+      levels: 4,
+      gamma: 1.0,
+      animSpeed: 1.0,
+      fps: 24,
+      gifSeconds: 1.5,
+      mode: 'ordered',
+      bgMode: 'white',   // 'white' | 'black' | 'transparent'
+      bgColor: '#ffffff',
+      reverseColors: false,
+      exportScale: 2
+    };
+
+    const channels = {
+      R: {
+        enabled: true,
+        mute: false,
+        solo: false,
+        gain: 1.0,
+        scale: 0.3,
+        noise: 0,
+        threshold: 0.0,
+        angle: 0,
+        source: 'R',
+        blend: 'MULTIPLY',
+        shape: 'square',
+        color: '#ff3366',
+        offsetX: 0,
+        offsetY: 0
+      },
+      G: {
+        enabled: true,
+        mute: false,
+        solo: false,
+        gain: 1.0,
+        scale: 0.3,
+        noise: 0,
+        threshold: 0.0,
+        angle: 0,
+        source: 'G',
+        blend: 'SCREEN',
+        shape: 'square',
+        color: '#22c55e',
+        offsetX: 0,
+        offsetY: 0
+      },
+      B: {
+        enabled: true,
+        mute: false,
+        solo: false,
+        gain: 1.0,
+        scale: 0.3,
+        noise: 0,
+        threshold: 0.0,
+        angle: 0,
+        source: 'B',
+        blend: 'DARKEST',
+        shape: 'square',
+        color: '#60a5fa',
+        offsetX: 0,
+        offsetY: 0
+      },
+      L: {
+        enabled: true,
+        mute: false,
+        solo: false,
+        gain: 1.0,
+        scale: 1.0,
+        noise: 0,
+        threshold: 0.0,
+        angle: 0,
+        source: 'L',
+        blend: 'OVERLAY',
+        shape: 'circle',
+        color: '#facc15',
+        offsetX: 0,
+        offsetY: 0
+      }
+    };
+
+    const state = {
+      basicMode: true,
+      playing: false,
+      time: 0,
+      animationMode: false,
+      baseWidth: 0,
+      baseHeight: 0,
+      capture: {
+        active: false,
+        gif: null,
+        framesRemaining: 0,
+        totalFrames: 0,
+        baseWidth: 0,
+        baseHeight: 0,
+        scale: 1,
+        exportDensity: 1,
+        prevWidth: 0,
+        prevHeight: 0,
+        prevDensity: 1
+      }
+    };
+
+    const knobs = [];
+    const knobRegistry = new Map();
+    const animationTargets = new Map();
+    const GIF_WORKER_SRC = 'https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js';
+    let gifWorkerURL = null;
+    let gifWorkerLoadPromise = null;
+
+    // ====== p5 LIFECYCLE ======
+    function setup() {
+      const holder = document.getElementById('canvas-holder');
+      const rect = holder.getBoundingClientRect();
+
+      state.baseWidth = rect.width;
+      state.baseHeight = rect.height;
+
+      mainCanvas = createCanvas(rect.width, rect.height);
+      mainCanvas.parent(holder);
+
+      pixelDensity(1);
+      noSmooth();
+      noStroke();
+
+      setupUI();
+      updateBackgroundFromMode();
+      syncAllKnobs();
+      renderFrame();
+    }
+
+    function windowResized() {
+      const holder = document.getElementById('canvas-holder');
+      if (!holder) return;
+      const rect = holder.getBoundingClientRect();
+      state.baseWidth = rect.width;
+      state.baseHeight = rect.height;
+      resizeCanvas(rect.width, rect.height);
+      renderFrame();
+    }
+
+    function draw() {
+      const captureActive = state.capture.active;
+      const dt = captureActive
+        ? (1 / Math.max(1, globalParams.fps))
+        : (deltaTime / 1000.0);
+
+      const playingNow = state.playing || captureActive;
+      if (!playingNow) return;
+
+      state.time += dt * globalParams.animSpeed;
+      renderFrame();
+
+      if (captureActive && state.capture.gif) {
+        state.capture.gif.addFrame(mainCanvas.elt, {
+          copy: true,
+          delay: 1000 / Math.max(1, globalParams.fps)
+        });
+        state.capture.framesRemaining--;
+        updateStatusLine();
+        if (state.capture.framesRemaining <= 0) {
+          finishGifExport();
+        }
+      }
+    }
+
+    // ====== RENDERING ======
+    function renderFrame() {
+      applyAnimatedParams(state.time);
+      applyBackground();
+
+      if (!img) {
+        document.getElementById('no-image-hint').style.display = 'block';
+        return;
+      } else {
+        document.getElementById('no-image-hint').style.display = 'none';
+      }
+
+      img.loadPixels();
+      renderLayers();
+    }
+
+    function renderLayers() {
+      const pad = PREVIEW_PADDING;
+      const innerW = Math.max(1, width - pad * 2);
+      const innerH = Math.max(1, height - pad * 2);
+
+      const fit = computeContain(img.width, img.height, innerW, innerH);
+
+      const cell = Math.max(2, Math.round(globalParams.cellSize));
+      const gap = Math.max(0, Math.round(globalParams.cellSize * 0.2));
+      const step = cell + gap;
+      const levels = Math.max(2, Math.round(globalParams.levels));
+      const tGlobal = state.time;
+
+      const rMaxBase = (cell * 0.5) * 0.98;
+
+      const soloActive = channels.R.solo || channels.G.solo || channels.B.solo || channels.L.solo;
+      const keys = ['R', 'G', 'B', 'L'];
+      const channelColors = {};
+      const channelBlendModes = {};
+      keys.forEach((key) => {
+        channelColors[key] = getChannelRGB(channels[key].color, globalParams.reverseColors);
+        channelBlendModes[key] = resolveBlendMode(channels[key].blend);
+      });
+      let currentBlend = BLEND;
+
+      for (let gy = -1, y = pad - step; y < height - pad + step; gy++, y += step) {
+        for (let gx = -1, x = pad - step; x < width - pad + step; gx++, x += step) {
+          const cxBase = x + step / 2;
+          const cyBase = y + step / 2;
+
+          const sx = (cxBase - pad - fit.dx) / fit.scale;
+          const sy = (cyBase - pad - fit.dy) / fit.scale;
+
+          if (sx < 0 || sy < 0 || sx >= img.width || sy >= img.height) continue;
+
+          const ix = Math.floor(sx);
+          const iy = Math.floor(sy);
+          const idx = (iy * img.width + ix) * 4;
+
+          const r = img.pixels[idx + 0];
+          const g = img.pixels[idx + 1];
+          const b = img.pixels[idx + 2];
+          const baseLuma = lumaFromRGB(r, g, b);
+
+          const bx = ((gx % 4) + 4) % 4;
+          const by = ((gy % 4) + 4) % 4;
+          const bayerThreshold = (BAYER4[by][bx] + 0.5) / 16.0;
+
+          keys.forEach((chKey) => {
+            const ch = channels[chKey];
+            if (!ch.enabled) return;
+            if (ch.mute) return;
+            if (soloActive && !ch.solo) return;
+            if (ch.gain <= 0) return;
+
+            let v = sampleChannelSource(ch.source, r, g, b, baseLuma);
+            v = applyToneMap(v, ch.threshold);
+            v = applyDither(v, ch, bayerThreshold, gx, gy, levels, tGlobal);
+
+            const scaleFactor = clamp01(ch.scale);
+            const rMax = rMaxBase * (0.3 + 0.7 * scaleFactor);
+            let radius = rMax * (1.0 - v) * globalParams.masterMix * ch.gain;
+
+            if (radius <= 0.4) return;
+
+            const jitterAmount = ch.noise * cell * 0.6;
+            const seed = channelSeeds[chKey];
+            const jx = (noise(seed.x + gx * 0.27, seed.y + gy * 0.31, tGlobal * 0.6) - 0.5) * 2 * jitterAmount;
+            const jy = (noise(seed.y + gx * 0.19, seed.x + gy * 0.37, tGlobal * 0.6) - 0.5) * 2 * jitterAmount;
+
+            let px = cxBase + jx;
+            let py = cyBase + jy;
+
+            const angleRad = ch.angle * Math.PI / 180;
+            const cosA = Math.cos(angleRad);
+            const sinA = Math.sin(angleRad);
+
+            const ux = px - width / 2;
+            const uy = py - height / 2;
+            const rx = ux * cosA - uy * sinA;
+            const ry = ux * sinA + uy * cosA;
+            px = rx + width / 2 + ch.offsetX;
+            py = ry + height / 2 + ch.offsetY;
+
+            if (px < pad - cell || py < pad - cell || px > width - pad + cell || py > height - pad + cell) return;
+
+            const baseAlpha = 255 * clamp01(globalParams.masterMix * ch.gain);
+            const colRGB = channelColors[chKey];
+            if (!colRGB) return;
+
+            const blend = channelBlendModes[chKey] || BLEND;
+            if (blend !== currentBlend) {
+              blendMode(blend);
+              currentBlend = blend;
+            }
+
+            drawShapeAt(ch.shape, px, py, radius, colRGB[0], colRGB[1], colRGB[2], baseAlpha);
+          });
+        }
+      }
+
+      blendMode(BLEND);
+    }
+
+    function sampleChannelSource(source, r, g, b, luma) {
+      if (source === 'R') return r / 255;
+      if (source === 'G') return g / 255;
+      if (source === 'B') return b / 255;
+      return luma; // Luma
+    }
+
+    function applyToneMap(v, threshold) {
+      v = clamp01(v);
+
+      v = (v - 0.5) * globalParams.contrast + 0.5 + globalParams.brightness;
+      v = clamp01(v);
+
+      if (globalParams.gamma !== 1.0) {
+        v = Math.pow(v, globalParams.gamma);
+      }
+
+      v += threshold;
+      v = clamp01(v);
+      return v;
+    }
+
+    function applyDither(v, ch, bayerThreshold, gx, gy, levels, t) {
+      let tVal = clamp01(v);
+
+      if (globalParams.mode === 'ordered') {
+        const q = Math.floor(tVal * levels + bayerThreshold) / (levels - 1);
+        tVal = clamp01(q);
+      } else if (globalParams.mode === 'random') {
+        const n = (noise(gx * 0.23, gy * 0.19, t * 1.3) - 0.5) * (2 / levels) * ch.noise;
+        const q = Math.floor(clamp01(tVal + n) * levels) / (levels - 1);
+        tVal = clamp01(q);
+      } else {
+        const q = Math.floor(tVal * levels) / (levels - 1);
+        tVal = clamp01(q);
+      }
+
+      const flicker = 0.05 * ch.noise * Math.sin(t * 2 + gx * 0.13 + gy * 0.29);
+      tVal = clamp01(tVal + flicker);
+      return tVal;
+    }
+
+    function drawShapeAt(shape, x, y, r, rCol, gCol, bCol, alpha) {
+      const d = r * 2;
+      push();
+      noStroke();
+      fill(rCol, gCol, bCol, alpha);
+
+      if (shape === 'square') {
+        rectMode(CENTER);
+        rect(x, y, d / Math.SQRT2 * 2, d / Math.SQRT2 * 2);
+      } else if (shape === 'diamond') {
+        rectMode(CENTER);
+        translate(x, y);
+        rotate(Math.PI / 4);
+        rect(0, 0, d / Math.SQRT2 * 2, d / Math.SQRT2 * 2);
+      } else if (shape === 'line') {
+        rectMode(CENTER);
+        const sw = Math.max(0.6, r * 0.55);
+        rect(x, y, d, sw);
+      } else if (shape === 'plus') {
+        rectMode(CENTER);
+        const sw = Math.max(0.6, r * 0.45);
+        rect(x, y, d, sw);
+        rect(x, y, sw, d);
+      } else if (shape === 'triangle') {
+        beginShape();
+        const h = r * Math.sqrt(3);
+        vertex(x, y - h / 2);
+        vertex(x - r, y + h / 2);
+        vertex(x + r, y + h / 2);
+        endShape(CLOSE);
+      } else {
+        circle(x, y, d);
+      }
+
+      pop();
+    }
+
+    function resolveBlendMode(name) {
+      return {
+        'BLEND': BLEND,
+        'MULTIPLY': MULTIPLY,
+        'SCREEN': SCREEN,
+        'OVERLAY': OVERLAY,
+        'ADD': ADD,
+        'DIFFERENCE': DIFFERENCE,
+        'EXCLUSION': EXCLUSION,
+        'LIGHTEST': LIGHTEST,
+        'DARKEST': DARKEST,
+        'HARD_LIGHT': HARD_LIGHT,
+        'SOFT_LIGHT': SOFT_LIGHT
+      }[name] || BLEND;
+    }
+
+    function applyBackground() {
+      if (globalParams.bgMode === 'transparent') {
+        clear();
+        return;
+      }
+      const baseCol = colorValueToRGB(globalParams.bgColor);
+      const finalCol = globalParams.reverseColors ? invertRGB(baseCol) : baseCol;
+      background(finalCol[0], finalCol[1], finalCol[2]);
+    }
+
+    function updateBackgroundFromMode() {
+      if (globalParams.bgMode === 'white') {
+        globalParams.bgColor = '#ffffff';
+      } else if (globalParams.bgMode === 'black') {
+        globalParams.bgColor = '#000000';
+      } else {
+        globalParams.bgColor = [0, 0, 0, 0];
+      }
+    }
+
+    // ====== UI SETUP ======
+    function setupUI() {
+      const body = document.body;
+
+      const imageInput = document.getElementById('imageInput');
+      const btnLoadImage = document.getElementById('btnLoadImage');
+      btnLoadImage.addEventListener('click', () => imageInput.click());
+      imageInput.addEventListener('change', onImageSelected);
+
+      const modeBasic = document.getElementById('modeBasic');
+      const modeAdvanced = document.getElementById('modeAdvanced');
+
+      modeBasic.addEventListener('click', () => {
+        state.basicMode = true;
+        body.classList.remove('advanced-on');
+        modeBasic.classList.add('active');
+        modeAdvanced.classList.remove('active');
+        renderFrame();
+      });
+
+      modeAdvanced.addEventListener('click', () => {
+        state.basicMode = false;
+        body.classList.add('advanced-on');
+        modeAdvanced.classList.add('active');
+        modeBasic.classList.remove('active');
+        renderFrame();
+      });
+
+      const playBtn = document.getElementById('playPause');
+      playBtn.addEventListener('click', () => {
+        state.playing = !state.playing;
+        if (state.playing || state.capture.active) {
+          playBtn.classList.remove('paused');
+          playBtn.textContent = '⏸ Pause';
+          loop();
+        } else {
+          playBtn.classList.add('paused');
+          playBtn.textContent = '▶ Play';
+          if (!state.capture.active) noLoop();
+        }
+      });
+
+      const animModeToggle = document.getElementById('toggleAnimMode');
+      if (animModeToggle) {
+        animModeToggle.addEventListener('click', () => {
+          state.animationMode = !state.animationMode;
+          if (state.animationMode) {
+            resetAnimationStartTimes();
+          } else if (!state.capture.active) {
+            restoreAnimatedParams();
+          }
+          updateAnimationModeUI(animModeToggle);
+          renderFrame();
+        });
+        updateAnimationModeUI(animModeToggle);
+      }
+
+      const modeSelect = document.getElementById('modeSelect');
+      modeSelect.value = globalParams.mode;
+      modeSelect.addEventListener('change', (e) => {
+        globalParams.mode = e.target.value;
+        renderFrame();
+      });
+
+      // Background mode
+      const bgButtons = document.querySelectorAll('#bgToggle .bg-btn');
+      bgButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const mode = btn.dataset.bg;
+          globalParams.bgMode = mode;
+          bgButtons.forEach(b => b.classList.toggle('active', b === btn));
+          updateBackgroundFromMode();
+          renderFrame();
+        });
+      });
+      updateBackgroundFromMode();
+
+      const reverseBtn = document.getElementById('btnReverseColors');
+      if (reverseBtn) {
+        reverseBtn.addEventListener('click', () => {
+          globalParams.reverseColors = !globalParams.reverseColors;
+          updateReverseColorsUI(reverseBtn);
+          renderFrame();
+        });
+        updateReverseColorsUI(reverseBtn);
+      }
+
+      // Export scale
+      const exportScaleSel = document.getElementById('exportScale');
+      globalParams.exportScale = parseFloat(exportScaleSel.value) || 1;
+      exportScaleSel.addEventListener('change', e => {
+        globalParams.exportScale = parseFloat(e.target.value) || 1;
+      });
+
+      // Channel selects & colors
+      document.getElementById('R_source').addEventListener('change', (e) => {
+        channels.R.source = e.target.value;
+        renderFrame();
+      });
+      document.getElementById('G_source').addEventListener('change', (e) => {
+        channels.G.source = e.target.value;
+        renderFrame();
+      });
+      document.getElementById('B_source').addEventListener('change', (e) => {
+        channels.B.source = e.target.value;
+        renderFrame();
+      });
+      document.getElementById('L_source').addEventListener('change', (e) => {
+        channels.L.source = e.target.value;
+        renderFrame();
+      });
+
+      document.getElementById('R_blend').addEventListener('change', (e) => {
+        channels.R.blend = e.target.value;
+        renderFrame();
+      });
+      document.getElementById('G_blend').addEventListener('change', (e) => {
+        channels.G.blend = e.target.value;
+        renderFrame();
+      });
+      document.getElementById('B_blend').addEventListener('change', (e) => {
+        channels.B.blend = e.target.value;
+        renderFrame();
+      });
+      document.getElementById('L_blend').addEventListener('change', (e) => {
+        channels.L.blend = e.target.value;
+        renderFrame();
+      });
+
+      document.getElementById('R_color').addEventListener('input', (e) => {
+        channels.R.color = e.target.value;
+        renderFrame();
+      });
+      document.getElementById('G_color').addEventListener('input', (e) => {
+        channels.G.color = e.target.value;
+        renderFrame();
+      });
+      document.getElementById('B_color').addEventListener('input', (e) => {
+        channels.B.color = e.target.value;
+        renderFrame();
+      });
+      document.getElementById('L_color').addEventListener('input', (e) => {
+        channels.L.color = e.target.value;
+        renderFrame();
+      });
+
+      // Channel toggles
+      document.querySelectorAll('.toggle-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const ch = btn.dataset.channel;
+          const prop = btn.dataset.toggle;
+          const c = channels[ch];
+          if (!c) return;
+
+          if (prop === 'enabled') {
+            c.enabled = !c.enabled;
+            btn.classList.toggle('is-on', c.enabled);
+          } else if (prop === 'mute') {
+            c.mute = !c.mute;
+            btn.classList.toggle('is-muted', c.mute);
+            if (c.mute) {
+              c.solo = false;
+              const soloBtn = document.querySelector(`.toggle-btn[data-channel="${ch}"][data-toggle="solo"]`);
+              if (soloBtn) soloBtn.classList.remove('is-solo');
+            }
+          } else if (prop === 'solo') {
+            c.solo = !c.solo;
+            btn.classList.toggle('is-solo', c.solo);
+            if (c.solo) {
+              c.mute = false;
+              const muteBtn = document.querySelector(`.toggle-btn[data-channel="${ch}"][data-toggle="mute"]`);
+              if (muteBtn) muteBtn.classList.remove('is-muted');
+            }
+          }
+
+          renderFrame();
+        });
+      });
+
+      // Shape icon rows
+      document.querySelectorAll('.shape-row').forEach((row) => {
+        const ch = row.dataset.shapeRow;
+        const cfg = channels[ch];
+        if (!cfg) return;
+
+        const buttons = row.querySelectorAll('.shape-icon-btn');
+        const setActive = () => {
+          buttons.forEach((btn) => {
+            btn.classList.toggle('active', btn.dataset.shape === cfg.shape);
+          });
+        };
+        setActive();
+
+        buttons.forEach((btn) => {
+          btn.addEventListener('click', () => {
+            cfg.shape = btn.dataset.shape;
+            setActive();
+            renderFrame();
+          });
+        });
+      });
+
+      // Export
+      document.getElementById('btnExportPNG').addEventListener('click', () => {
+        exportPNG();
+      });
+      document.getElementById('btnExportGIF').addEventListener('click', () => {
+        startGifExport().catch(err => {
+          console.error(err);
+          const status = document.getElementById('status');
+          if (status) status.textContent = 'GIF export failed to start.';
+        });
+      });
+
+      // Knobs
+      document.querySelectorAll('.knob').forEach((el) => {
+        const knob = createKnob(el);
+        knobs.push(knob);
+      });
+    }
+
+    function updateAnimationModeUI(button = document.getElementById('toggleAnimMode')) {
+      if (!button) return;
+      button.classList.toggle('active', state.animationMode);
+      button.textContent = state.animationMode ? 'Automation Mode: ON' : 'Automation Mode: OFF';
+      document.body.classList.toggle('animation-mode-on', state.animationMode);
+    }
+
+    function updateReverseColorsUI(button = document.getElementById('btnReverseColors')) {
+      if (!button) return;
+      button.classList.toggle('active', globalParams.reverseColors);
+      button.textContent = globalParams.reverseColors ? 'Reverse Colors: ON' : 'Reverse Colors: OFF';
+    }
+
+    function hasAnimatedTargets() {
+      return animationTargets.size > 0;
+    }
+
+    function toggleKnobAnimation(key) {
+      const meta = knobRegistry.get(key);
+      if (!meta) return;
+      if (animationTargets.has(key)) {
+        restoreAnimatedParams(key);
+        animationTargets.delete(key);
+      } else {
+        const owner = getParamContainer(meta.channel);
+        const baseValue = owner ? owner[meta.param] : 0;
+        const range = (meta.max - meta.min) || 1;
+        const amplitude = Math.max(range * 0.2, 0.01);
+        animationTargets.set(key, {
+          baseValue,
+          amplitude,
+          speed: 0.6 + Math.random() * 1.4,
+          direction: Math.random() > 0.5 ? 1 : -1,
+          startedAt: state.time || 0
+        });
+      }
+      updateKnobAnimationClasses();
+    }
+
+    function updateKnobAnimationClasses() {
+      knobRegistry.forEach((meta, key) => {
+        if (!meta.element) return;
+        meta.element.classList.toggle('is-anim-target', animationTargets.has(key));
+      });
+    }
+
+    function getParamContainer(channel) {
+      if (channel === 'global') return globalParams;
+      return channels[channel];
+    }
+
+    function syncAllKnobs() {
+      knobs.forEach(k => k.sync());
+    }
+
+    function applyAnimatedParams(timeValue) {
+      if (!hasAnimatedTargets()) return;
+      const animateNow = state.capture.active || state.animationMode;
+      if (!animateNow) {
+        restoreAnimatedParams();
+        return;
+      }
+
+      animationTargets.forEach((animCfg, key) => {
+        const meta = knobRegistry.get(key);
+        if (!meta) return;
+        const owner = getParamContainer(meta.channel);
+        if (!owner) return;
+        const range = (meta.max - meta.min) || 1;
+        const amplitude = clamp(animCfg.amplitude, 0.01, range * 0.5);
+        const elapsed = Math.max(0, timeValue - (animCfg.startedAt || 0));
+        const angle = elapsed * animCfg.speed;
+        const offset = Math.sin(angle) * amplitude * (animCfg.direction || 1);
+        const value = clamp(animCfg.baseValue + offset, meta.min, meta.max);
+        owner[meta.param] = value;
+        if (typeof meta.updateVisual === 'function') {
+          meta.updateVisual(value);
+        }
+      });
+    }
+
+    function restoreAnimatedParams(targetKey) {
+      const keys = targetKey ? [targetKey] : Array.from(animationTargets.keys());
+      keys.forEach((key) => {
+        const animCfg = animationTargets.get(key);
+        const meta = knobRegistry.get(key);
+        if (!meta || !animCfg) return;
+        const owner = getParamContainer(meta.channel);
+        if (!owner) return;
+        owner[meta.param] = animCfg.baseValue;
+        if (typeof meta.updateVisual === 'function') {
+          meta.updateVisual(animCfg.baseValue);
+        }
+      });
+    }
+
+    function resetAnimationStartTimes(referenceTime = state.time || 0) {
+      animationTargets.forEach((animCfg) => {
+        animCfg.startedAt = referenceTime;
+      });
+    }
+
+    async function ensureGifWorkerScript() {
+      if (gifWorkerURL) return gifWorkerURL;
+      if (gifWorkerLoadPromise) return gifWorkerLoadPromise;
+      if (typeof fetch !== 'function') return null;
+
+      gifWorkerLoadPromise = fetch(GIF_WORKER_SRC, { cache: 'force-cache' })
+        .then((resp) => {
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+          return resp.text();
+        })
+        .then((code) => {
+          const blob = new Blob([code], { type: 'application/javascript' });
+          gifWorkerURL = URL.createObjectURL(blob);
+          return gifWorkerURL;
+        })
+        .catch((err) => {
+          console.error('Failed to load GIF worker script', err);
+          return null;
+        })
+        .finally(() => {
+          if (!gifWorkerURL) {
+            gifWorkerLoadPromise = null;
+          }
+        });
+
+      return gifWorkerLoadPromise;
+    }
+
+    // ====== IMAGE HANDLING ======
+    function onImageSelected(e) {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        loadImage(ev.target.result, (loaded) => {
+          img = loaded;
+          img.loadPixels();
+          imgName = file.name || 'image';
+          document.getElementById('sourceName').textContent = imgName;
+          renderFrame();
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // ====== KNOBS ======
+    function createKnob(el) {
+      const channel = el.dataset.channel;
+      const param = el.dataset.param;
+      const min = parseFloat(el.dataset.min);
+      const max = parseFloat(el.dataset.max);
+      const step = parseFloat(el.dataset.step) || 0.01;
+      const format = el.dataset.format || '1.2';
+      const knobKey = `${channel}:${param}`;
+      el.dataset.knobKey = knobKey;
+
+      const indicator = el.querySelector('.knob-indicator');
+      const readout = el.querySelector('.knob-readout');
+
+      let dragging = false;
+      let startY = 0;
+      let startValue = 0;
+
+      function getTarget() {
+        if (channel === 'global') return globalParams;
+        return channels[channel];
+      }
+
+      function getValue() {
+        return getTarget()[param];
+      }
+
+      function setValue(v) {
+        const target = getTarget();
+        const clamped = clamp(v, min, max);
+        target[param] = clamped;
+        updateVisual(clamped);
+        if (animationTargets.has(knobKey) && !state.animationMode && !state.capture.active) {
+          const anim = animationTargets.get(knobKey);
+          anim.baseValue = clamped;
+        }
+        if (channel === 'global' && param === 'fps') {
+          frameRate(Math.max(1, Math.round(globalParams.fps)));
+        }
+        renderFrame();
+      }
+
+      function valueToAngle(v) {
+        const range = max - min || 1;
+        const t = clamp((v - min) / range, 0, 1);
+        return (t * 2 - 1) * 135; // -135 .. 135 mapped to min..max
+      }
+
+      function formatValue(v) {
+        if (format === 'int') return Math.round(v).toString();
+        if (format === 'percent') return Math.round(v * 100) + '%';
+        if (format === '1.2') return v.toFixed(2);
+        if (format === '1.1') return v.toFixed(1);
+        if (format === 'signed0.2') {
+          const s = v.toFixed(2);
+          return (v > 0 ? '+' + s : s);
+        }
+        return v.toFixed(2);
+      }
+
+      function updateVisual(v) {
+        const angle = valueToAngle(v);
+        if (indicator) {
+          indicator.style.transform = `translate(-50%, -85%) rotate(${angle}deg)`;
+        }
+        if (readout) {
+          readout.textContent = formatValue(v);
+        }
+      }
+
+      function sync() {
+        updateVisual(getValue());
+      }
+
+      function onPointerDown(evt) {
+        evt.preventDefault();
+        if (state.animationMode) {
+          toggleKnobAnimation(knobKey);
+          renderFrame();
+          return;
+        }
+        dragging = true;
+        startY = getPointerY(evt);
+        startValue = getValue();
+        window.addEventListener('mousemove', onPointerMove);
+        window.addEventListener('mouseup', onPointerUp);
+        window.addEventListener('touchmove', onPointerMove, { passive: false });
+        window.addEventListener('touchend', onPointerUp);
+      }
+
+      function onPointerMove(evt) {
+        if (!dragging) return;
+        evt.preventDefault();
+        const y = evt.clientY || (evt.touches && evt.touches[0].clientY) || 0;
+        const dy = startY - y;
+        const range = max - min || 1;
+        const sensitivity = range / 160;
+        let delta = dy * sensitivity;
+        if (evt.shiftKey) delta *= 0.25;
+        const raw = startValue + delta;
+        let snapped = raw;
+        if (step > 0) {
+          snapped = Math.round(raw / step) * step;
+        }
+        setValue(snapped);
+      }
+
+      function onPointerUp() {
+        dragging = false;
+        window.removeEventListener('mousemove', onPointerMove);
+        window.removeEventListener('mouseup', onPointerUp);
+        window.removeEventListener('touchmove', onPointerMove);
+        window.removeEventListener('touchend', onPointerUp);
+      }
+
+      el.addEventListener('mousedown', onPointerDown);
+      el.addEventListener('touchstart', (evt) => {
+        evt.preventDefault();
+        onPointerDown(evt);
+      }, { passive: false });
+
+      knobRegistry.set(knobKey, {
+        element: el,
+        channel,
+        param,
+        min,
+        max,
+        updateVisual
+      });
+
+      return { sync, key: knobKey };
+
+      function getPointerY(ev) {
+        if (ev.touches && ev.touches.length) {
+          return ev.touches[0].clientY;
+        }
+        return ev.clientY || 0;
+      }
+    }
+
+    // ====== EXPORTS (HIGH-RES) ======
+    function exportPNG() {
+      if (!img) return;
+      const filename = (imgName || 'rgb_luma_dither') + '_mix.png';
+      const scale = Math.max(1, Math.round(globalParams.exportScale || 1));
+      const baseW = state.baseWidth || width;
+      const baseH = state.baseHeight || height;
+      const prevWidth = width;
+      const prevHeight = height;
+      const prevDensity = pixelDensity();
+      const targetDensity = Math.max(1, Math.round(prevDensity * scale));
+
+      pixelDensity(targetDensity);
+      resizeCanvas(baseW, baseH, false);
+      renderFrame();
+      saveCanvas(mainCanvas, filename, 'png');
+
+      // restore preview resolution and density
+      pixelDensity(prevDensity);
+      resizeCanvas(prevWidth, prevHeight, false);
+      renderFrame();
+    }
+
+    async function startGifExport() {
+      if (state.capture.active) return;
+      if (!img) return;
+
+      const workerURL = await ensureGifWorkerScript();
+      if (!workerURL) {
+        const status = document.getElementById('status');
+        if (status) {
+          status.textContent = 'GIF worker failed to load. Check your internet connection.';
+        }
+        return;
+      }
+
+      const frames = Math.max(4, Math.round(globalParams.gifSeconds * globalParams.fps));
+      const scale = Math.max(1, Math.round(globalParams.exportScale || 1));
+
+      state.capture.active = true;
+      state.capture.framesRemaining = frames;
+      state.capture.totalFrames = frames;
+      state.capture.scale = scale;
+      state.capture.baseWidth = state.baseWidth || width;
+      state.capture.baseHeight = state.baseHeight || height;
+      state.capture.prevWidth = width;
+      state.capture.prevHeight = height;
+      state.capture.prevDensity = pixelDensity();
+      state.capture.exportDensity = Math.max(1, Math.round(state.capture.prevDensity * scale));
+
+      pixelDensity(state.capture.exportDensity);
+      resizeCanvas(state.capture.baseWidth, state.capture.baseHeight, false);
+      renderFrame();
+
+      const gifConfig = {
+        workers: 2,
+        quality: 10,
+        width: state.capture.baseWidth * state.capture.exportDensity,
+        height: state.capture.baseHeight * state.capture.exportDensity,
+        workerScript: workerURL
+      };
+
+      // Simple transparent color key for GIF when bgMode = transparent
+      if (globalParams.bgMode === 'transparent') {
+        gifConfig.transparent = 0xff00ff; // magenta key; unlikely to clash
+      }
+
+      const gif = new GIF(gifConfig);
+
+      gif.on('finished', (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = (imgName || 'rgb_luma_dither') + `_mix_${frames}f.gif`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        const status = document.getElementById('status');
+        status.textContent = `GIF saved (${frames} frames)`;
+      });
+
+      state.capture.gif = gif;
+
+      const status = document.getElementById('status');
+      status.textContent = `Capturing GIF… 0 / ${frames} frames`;
+
+      state.time = 0;
+      resetAnimationStartTimes(0);
+      frameRate(Math.max(1, Math.round(globalParams.fps)));
+
+      if (!state.playing) {
+        loop();
+      }
+    }
+
+    function finishGifExport() {
+      if (!state.capture.active) return;
+      const gif = state.capture.gif;
+      state.capture.active = false;
+      state.capture.gif = null;
+      state.capture.framesRemaining = 0;
+      const prevDensity = state.capture.prevDensity || 1;
+      const prevWidth = state.capture.prevWidth || state.capture.baseWidth || width;
+      const prevHeight = state.capture.prevHeight || state.capture.baseHeight || height;
+
+      pixelDensity(prevDensity);
+      resizeCanvas(prevWidth, prevHeight, false);
+      renderFrame();
+
+      if (!state.playing) {
+        noLoop();
+      }
+
+      if (gif) {
+        const status = document.getElementById('status');
+        status.textContent = 'Encoding GIF…';
+        gif.render();
+      }
+    }
+
+    function updateStatusLine() {
+      const status = document.getElementById('status');
+      if (!status || !state.capture.active) return;
+      const done = state.capture.totalFrames - state.capture.framesRemaining;
+      status.textContent = `Capturing GIF… ${done} / ${state.capture.totalFrames} frames`;
+    }
+
+    // ====== HELPERS ======
+    function lumaFromRGB(r, g, b) {
+      const rl = toLinear(r / 255);
+      const gl = toLinear(g / 255);
+      const bl = toLinear(b / 255);
+      return clamp01(0.2126 * rl + 0.7152 * gl + 0.0722 * bl);
+    }
+
+    function toLinear(c) {
+      return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    }
+
+    function colorValueToRGB(val) {
+      if (Array.isArray(val)) {
+        return [val[0] || 0, val[1] || 0, val[2] || 0];
+      }
+      return hexToRGB(val);
+    }
+
+    function getChannelRGB(hex, reverse) {
+      const rgb = hexToRGB(hex);
+      return reverse ? invertRGB(rgb) : rgb;
+    }
+
+    function invertRGB(rgb) {
+      return [255 - rgb[0], 255 - rgb[1], 255 - rgb[2]];
+    }
+
+    function hexToRGB(hex) {
+      if (typeof hex !== 'string') return [0, 0, 0];
+      let clean = hex.trim();
+      if (clean.startsWith('#')) clean = clean.slice(1);
+      if (clean.length === 3) {
+        clean = clean.split('').map(ch => ch + ch).join('');
+      }
+      const num = parseInt(clean, 16);
+      if (Number.isNaN(num)) return [0, 0, 0];
+      return [
+        (num >> 16) & 255,
+        (num >> 8) & 255,
+        num & 255
+      ];
+    }
+
+    function computeContain(iw, ih, cw, ch) {
+      const s = Math.min(cw / iw, ch / ih);
+      const dw = iw * s;
+      const dh = ih * s;
+      const dx = (cw - dw) * 0.5;
+      const dy = (ch - dh) * 0.5;
+      return { scale: s, dx, dy, dw, dh };
+    }
+
+    function clamp(v, a, b) {
+      return v < a ? a : v > b ? b : v;
+    }
+
+    function clamp01(v) {
+      return clamp(v, 0, 1);
+    }
+  </script>
+</body>
+</html>

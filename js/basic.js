@@ -203,6 +203,18 @@
         info.style.display = 'block';
       };
       const hide = () => { if (info) info.style.display = 'none'; };
+      const alignCloseButton = () => {
+        if (!runner || !btnClose) return;
+        if (btnClose.style.display === 'none') return;
+        const rect = runner.getBoundingClientRect();
+        const gap = 12;
+        const width = btnClose.offsetWidth || 32;
+        const left = Math.max(12, rect.left - width - gap);
+        const top = Math.max(12, rect.top + 18);
+        btnClose.style.left = left + 'px';
+        btnClose.style.top = top + 'px';
+      };
+      let resizeBound = false;
       p.querySelectorAll('[data-tool]').forEach(a => {
         const key = a.getAttribute('data-tool');
         a.addEventListener('mouseenter', () => show(key));
@@ -225,6 +237,15 @@
           frame.src = url;
           runner.style.display = 'block';
           runner.setAttribute('aria-hidden','false');
+          if (btnClose) {
+            btnClose.style.display = 'inline-flex';
+            btnClose.setAttribute('aria-hidden', 'false');
+            requestAnimationFrame(alignCloseButton);
+            if (!resizeBound) {
+              window.addEventListener('resize', alignCloseButton);
+              resizeBound = true;
+            }
+          }
         });
       });
 
@@ -233,6 +254,12 @@
         if (!runner || !frame) return;
         runner.style.display = 'none';
         runner.setAttribute('aria-hidden','true');
+        if (btnClose) {
+          btnClose.style.display = 'none';
+          btnClose.setAttribute('aria-hidden', 'true');
+          btnClose.style.left = '';
+          btnClose.style.top = '';
+        }
         try { frame.src = 'about:blank'; } catch (_) {}
       };
       if (btnClose) btnClose.addEventListener('click', closeRunner);

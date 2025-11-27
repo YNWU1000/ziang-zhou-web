@@ -28,9 +28,9 @@
 
 <!-- Tool runner panel (loads p5 HTML) -->
 <section id="toolRunner" aria-hidden="true">
-  <button type="button" id="toolRunnerClose" aria-label="Close tool">◤Close</button>
   <iframe id="toolFrame" title="Tool Runner"></iframe>
   </section>
+<button type="button" id="toolRunnerClose" aria-label="Close tool">✕</button>
 
 <!-- Editable info templates for each tool (supports full HTML & paragraphs) -->
 <template id="toolinfo-particle">
@@ -72,8 +72,29 @@
     </div>
     <div class="desc">
       <p>Dither is an experimental image-based grid system for generative graphics. It transforms uploaded images into halftone-style compositions using customizable grid patterns, shapes, and color palettes. Inspired by traditional print dithering and modern generative design, the tool allows artists and designers to remix images into structured, modular patterns that feel both analog and algorithmic.</p>
+  </div>
+  <div class="photo"><img src="images/tool/dither/previews.gif" alt="DITHER banner"></div>
+  </div>
+  </template>
+
+  <template id="toolinfo-dithermixer">
+  <div class="grid">
+    <div class="heading">RGB Dixer</div>
+    <div class="heading">Channel Composer</div>
+    <div class="muted">
+      <div>Web</div>
+      <div>P5.JS</div>
+      <div>2025</div>
     </div>
-    <div class="photo"><img src="images/tool/dither/previews.gif" alt="DITHER banner"></div>
+    <div class="muted">
+      <div>Dither, Image Processing</div>
+      <div>Still Graphic, Animation</div>
+      <div>MK1 - Free</div>
+    </div>
+    <div class="desc">
+      <p>The RGB + Luma Dixer lets you layer four independent halftone systems on top of any uploaded image, then mix each channel back into a single graphic or looping capture. Each channel exposes custom palettes, density ranges, and blend modes so you can treat shadows, highlights, and color reveals differently.</p>
+      <p>Use it to preview hybrid halftones in real time, iterate on poster-style mixes, export high-resolution stills, or record GIF loops that animate the per-channel offsets.</p>
+    </div>
   </div>
   </template>
 
@@ -107,6 +128,9 @@
   <br />
 
   <!-- Replace the href values with your actual p5.js sketch URLs -->
+  <span class="chunk link" data-tool="dithermixer" href="#" rel="noopener noreferrer">◥</span>
+  <a class="chunk link" data-tool="dithermixer" data-p5="tool_p5/dithermixer_ynwumk4_2025.html" href="#" rel="noopener noreferrer">RGB Dixer</a>
+  <br />
   <span class="chunk link" data-tool="fractile" href="#" rel="noopener noreferrer">◥</span>
   <a class="chunk link" data-tool="fractile" data-p5="tool_p5/fractile_ynwumk4_2025.html" href="#" rel="noopener noreferrer">Fractile</a>
   <br />
@@ -130,7 +154,7 @@
 <aside id="toolInfo" aria-hidden="true"></aside>
 
 <noscript>
-  <div class="noscript-content">Tools: Fractile, Dither, GR1D.</div>
+  <div class="noscript-content">Tools: Fractile, Dither, RGB Dixer, GR1D.</div>
   </noscript>
 
 <footer>
